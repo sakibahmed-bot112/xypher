@@ -103,7 +103,7 @@ module.exports = {
 	
 	const permission = global.GoatBot?.config?.DEV || [];
   if (!permission.includes(event.senderID)) {
-    api.sendMessage("- বম্ববলা, উইরা জাহ মানগেরপোলা..!", event.threadID, event.messageID);
+    api.sendMessage("- মাদারচুদ বট কি তর বাপের নাকি..!😾", event.threadID, event.messageID);
     return;
   }
 
