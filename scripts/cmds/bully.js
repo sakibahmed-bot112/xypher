@@ -7,10 +7,10 @@ module.exports.config = {
 const userResponses = {};
 
 module.exports.onStart = async function ({ api, event }) {
-    const botAdmins = ['61576212342334']; // এখানে তোর UID দে
+    const botAdmins = ['61558166309783']; // এখানে তোর UID দে
 
     if (!botAdmins.includes(event.senderID)) {
-        return api.sendMessage("তুই কে রে? Permission ছাড়া চলবি না ভাই!", event.threadID);
+        return api.sendMessage("- আসিফ এর কাছ থেকে অনুমতি নে আগে..!👽", event.threadID);
     }
 
     const mention = Object.keys(event.mentions)[0];
