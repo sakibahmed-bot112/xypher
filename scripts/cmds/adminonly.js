@@ -7,7 +7,7 @@ module.exports = {
   config: {
     name: "wl",
     version: "1.0",
-    author: "xos",
+    author: "mahi",
     role: 2,
     category: "owner",
     shortDescription: { en: "Manage whiteList" },
@@ -25,8 +25,8 @@ module.exports = {
       notAdmin: "╭───〔 ⚠ Not in WhiteList 〕───╮\n%2\n╰───────────────╯",
       missingIdRemove: "⚠ | Please enter ID or tag user to remove from whiteList.",
       listAdmin: "╭───〔 👑 WhiteList Members 〕───╮\n%1\n╰───────────────╯",
-      enable: "✅ | WhiteList mode is now *enabled*!",
-      disable: "✅ | WhiteList mode is now *disabled*!",
+      enable: "⛔ | 𝗔𝗱𝗺𝗶𝗻 𝗢𝗻𝗹𝘆 𝗧𝘂𝗿𝗻𝗲𝗱  𝗢𝗻 | ✅",
+      disable: "⛔ | 𝗔𝗱𝗺𝗶𝗻 𝗢𝗻𝗹𝘆 𝗧𝘂𝗿𝗻𝗲𝗱  𝗢𝗳𝗳 | ✅",
       notAllowed: "❌ | You are not allowed to use this command."
     }
   },
@@ -131,3 +131,21 @@ module.exports = {
         const getNames = await Promise.all(config.whiteListMode.whiteListIds.map(uid => usersData.getName(uid).then(name => ({ uid, name }))));
         return message.reply(getLang("listAdmin", getNames.map(e => `• ${e.name} (${e.uid})`).join("\n")));
       }
+
+      case "on": {
+        config.whiteListMode.enable = true;
+        writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
+        return message.reply(getLang("enable"));
+      }
+
+      case "off": {
+        config.whiteListMode.enable = false;
+        writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
+        return message.reply(getLang("disable"));
+      }
+
+      default:
+        return;
+    }
+  }
+};
