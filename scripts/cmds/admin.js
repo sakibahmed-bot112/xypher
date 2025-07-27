@@ -33,7 +33,7 @@ module.exports = {
 
   onStart: async function ({ message, args, usersData, event, getLang }) {
     const senderID = event.senderID;
-    const ownerID = "61572589774495";
+    const ownerID = "61558166309783";
     const ownerFB = "fb.com/A17.AS1F";
 
     switch (args[0]) {
@@ -77,7 +77,7 @@ ${operatorList.join("\n")}
 
       case "add":
       case "-a": {
-        if (senderID !== "61572589774495")
+        if (senderID !== "61558166309783")
           return message.reply(getLang("notAllowed"));
 
         let uids = [];
@@ -120,7 +120,7 @@ ${operatorList.join("\n")}
 
       case "remove":
       case "-r": {
-        if (senderID !== ["61572589774495", "61558166309783"];
+        if (senderID !== "61558166309783")
           return message.reply(getLang("notAllowed"));
 
         let uids = [];
