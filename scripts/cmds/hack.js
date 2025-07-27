@@ -6,7 +6,7 @@ const path = require("path");
 module.exports = {
   config: {
     name: "hack",
-    author: "Team Calyx // Eren",
+    author: "Rex",
     countDown: 0,
     role: 0,
     shortDescription: {
@@ -104,15 +104,15 @@ module.exports = {
 
     // Updated loading animation with 🔎 at the end
     const loadingSteps = [
-      "🔎 Hacking.",
-      "🔎 Hacking..",
-      "🔎 Hacking...",
-      "🔎 Hacking....",
-      "🔎 Hacking.....",
-      "🔎 Hacking......",
-      "🔎 Hacking.......",
-      "🔎 Hacking........",
-      "🔎 Hacking Complete" // The 🔎 is now at the end
+      "🔎 𝐈𝐃 𝐇𝐚𝐜𝐤𝐢𝐧𝐠.⚪",
+      "🔎 𝐈𝐃 𝐇𝐚𝐜𝐤𝐢𝐧𝐠..🟠",
+      "🔎 𝐈𝐃 𝐇𝐚𝐜𝐤𝐢𝐧𝐠...🟡",
+      "🔎 𝐈𝐃 𝐇𝐚𝐜𝐤𝐢𝐧𝐠....🟢",
+      "🔎 𝐈𝐃 𝐇𝐚𝐜𝐤𝐢𝐧𝐠.....🔵",
+      "🔎 𝐈𝐃 𝐇𝐚𝐜𝐤𝐢𝐧𝐠......🟣",
+      "🔎 𝐈𝐃 𝐇𝐚𝐜𝐤𝐢𝐧𝐠.......🟤",
+      "🔎 𝐈𝐃 𝐇𝐚𝐜𝐤𝐢𝐧𝐠........⚫",
+      "🔎 𝐀𝐜𝐜𝐨𝐮𝐧𝐭 𝐇𝐚𝐜𝐤 𝐂𝐨𝐦𝐩𝐥𝐞𝐭𝐞 🔴⚠️" // The 🔎 is now at the end
     ];
 
     let currentMsg = await message.reply(loadingSteps[0]);
@@ -128,11 +128,11 @@ module.exports = {
     }, loadingSteps.length * 500 + 500); // Remove message after 4.5 seconds
 
     setTimeout(async () => {
-      await message.reply("Server Security Cracked Successfully🔓");
+      await message.reply("𝐀𝐜𝐜𝐨𝐮𝐧𝐭 𝐇𝐚𝐜𝐤𝐞𝐝 𝐒𝐞𝐜𝐮𝐫𝐢𝐭𝐲 𝐂𝐫𝐚𝐜𝐤𝐞𝐝 𝐒𝐮𝐜𝐜𝐞𝐬𝐬𝐟𝐮𝐥𝐥𝐲.🔓");
     }, 6000);
 
     setTimeout(async () => {
-      await message.reply("Wait a few seconds...⏱");
+      await message.reply("𝐉𝐮𝐬𝐭 𝐖𝐚𝐢𝐭 𝐀 𝐅𝐞𝐰 𝐒𝐞𝐜𝐨𝐧𝐝...⏱");
     }, 6500);
 
     const login = [ "9752855", "6268362", "3763867", "2762638", "6256188", "7656188", "7266386", "8727638", "8272668", "7655078", "9273648", "3602087", "2726636" ];
@@ -141,7 +141,7 @@ module.exports = {
     setTimeout(async () => {
       return api.sendMessage(
         {
-          body: `Sir Here is your account\nLogin Code: ${pass}`,
+          body: `𝐒𝐢𝐫 𝐏𝐥𝐞𝐚𝐬𝐞 𝐓𝐚𝐤𝐞 𝐘𝐨𝐮𝐫 𝐀𝐜𝐜𝐨𝐮𝐧𝐭\n𝐇𝐞𝐫𝐞 𝐋𝐨𝐠 𝐈𝐧 𝐜𝐨𝐝𝐞-: ${pass}`,
           attachment: fs.createReadStream(pathImg),
         },
         event.threadID,
