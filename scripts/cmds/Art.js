@@ -1,60 +1,92 @@
 const axios = require("axios");
-const fs = require("fs-extra");
-const path = require("path");
+const { getStreamFromURL } = global.utils;
+
+const models = {
+  "1": "Anime Premium V2",
+  "2": "Cartoon Premium",
+  "3": "Anime Style: Maid Outfit",
+  "4": "Anime Style: Beach Babe",
+  "5": "Anime Style: Sweet Fantasy",
+  "6": "Anime Style: Love Story Comic",
+  "7": "Anime Style: High School Memories",
+  "8": "Anime Style: Festive Christmas",
+  "9": "Anime Art: Pirate Adventure ( One Piece )",
+  "10": "Anime Art: Pop Star Sensation ( Oshi no Ko )",
+  "11": "Anime Art: Ninja Legacy ( Naruto )",
+  "12": "Anime Art: Super Warriors ( DBZ )",
+  "13": "Anime Art: Dark Notebook ( Death Note )",
+  "14": "Anime Art: Eternal Battle ( Bleach )",
+  "15": "Anime Art: Wings of Destiny ( AOT )",
+  "16": "Anime Art: Mystic Magic (Jujutsu Kaisen)",
+  "17": "Anime Art: Tennis Prodigy (ThePrince of Tennis)",
+  "18": "Anime Art: Demon Slayer Chronicles (Demon Slayer)",
+  "19": "Anime Art: Alchemical Adventures (Fullmetal Alchemist)",
+  "20": "Anime Art: Heroic Future (My Hero Academia)",
+  "21": "Anime Art: Prehistoric Quest (Dr Stone)",
+  "22": "Anime Art: Court Clash (Haikyuu)",
+  "23": "Anime Style: Ghibli V1",
+  "24": "Anime Style: Ghibli V2",
+  "25": "Anime Style: Webtoon",
+};
 
 module.exports = {
-    config: {
-        name: "art",
-        aliases: ["aiart", "genart"],
-        version: "1.0",
-        author: "Mostakim",
-        countDown: 15,
-        role: 0,
-        shortDescription: "AI Generated Art",
-        longDescription: "Get AI-generated images based on your prompt",
-        category: "fun",
-        guide: {
-            en: "{pn} prompt - limit (e.g. art a dog - 5)",
-        },
-    },
+  config: {
+    name: "art",
+    version: "1.0",
+    author: "SiAM",
+    countDown: 15,
+    role: 0,
+    shortDescription: "Turn yourself into an anime character!",
+    longDescription: "Apply an anime-style filter to an image to turn it into an anime character.",
+    category: "Image",
+    guide: {
+      en: "{pn} [modelNumber]\nexample: {pn} 2\n\nHere are the available models:\n" + Object.entries(models).map(([number, name]) => `❏ ${number} : ${name}`).join("\n")
+    }
+  },
 
-    onStart: async function ({ api, event, args }) {
-        const queryAndLength = args.join(" ").split("-");
-        const prompt = queryAndLength[0]?.trim();
-        const length = parseInt(queryAndLength[1]?.trim()) || 5;
+  onStart: async function ({ api, args, message, event, commandName }) {
+    try {
+      const [modelNumber] = args;
 
-        if (!prompt) {
-            return api.sendMessage("❌ | Please provide a prompt like: art a cat - 4", event.threadID, event.messageID);
-        }
+      if (!modelNumber) {
+        const list = Object.entries(models)
+          .map(([number, name]) => `❏ ${number} : ${name}`)
+          .join("\n");
 
-        try {
-            const waitMsg = await api.sendMessage("⏳ | Generating art, please wait...", event.threadID);
-            const res = await axios.get(`https://www.x-noobs-apis.42web.io/art?name=${encodeURIComponent(prompt)}`);
-            const imgLinks = res.data;
+        return message.reply(
+          `🖼️ 𝗔𝗿𝘁 𝗠𝗼𝗱𝗲𝗹 𝗟𝗶𝘀𝘁 🎨\n\n${list}\n\nUse command like:\n${commandName} [modelNumber]\nExample: ${commandName} 2`
+        );
+      }
 
-            if (!imgLinks || imgLinks.length === 0) {
-                return api.sendMessage("❌ | No images found for that prompt.", event.threadID, event.messageID);
-            }
+      if (isNaN(modelNumber) || !models[modelNumber]) {
+        return message.reply("Invalid model number. Please provide a valid model number from the list.");
+      }
 
-            const files = [];
-            const selectedImages = imgLinks.slice(0, length);
+      if (!(event.type === "message_reply" && event.messageReply.attachments && event.messageReply.attachments.length > 0 && ["photo", "sticker"].includes(event.messageReply.attachments[0].type))) {
+        return message.reply("Please reply to an image to apply the anime filter.⚠");
+      }
 
-            for (let i = 0; i < selectedImages.length; i++) {
-                const imgBuffer = await axios.get(selectedImages[i], { responseType: "arraybuffer" });
-                const filePath = path.join(__dirname, "cache", `art_${i + 1}.jpg`);
-                await fs.outputFile(filePath, imgBuffer.data);
-                files.push(fs.createReadStream(filePath));
-            }
+      const imageUrl = event.messageReply.attachments[0].url;
+      const encodedImageUrl = encodeURIComponent(imageUrl);
 
-            await api.unsendMessage(waitMsg.messageID);
-            return api.sendMessage({
-                body: `✅ | Here's your generated art for: "${prompt}"\n🖼️ | Total Images: ${selectedImages.length}`,
-                attachment: files,
-            }, event.threadID, event.messageID);
+      const processingMessage = await message.reply(`Applying the Filter, please wait...\nModel using: ${modelNumber} (${models[modelNumber]}) ⌛`);
 
-        } catch (err) {
-            console.error(err);
-            return api.sendMessage(`❌ | Error: ${err.message}`, event.threadID, event.messageID);
-        }
-    },
+      const response = await axios.get(`https://simo-aiart.onrender.com/generate?imageUrl=${encodedImageUrl}&modelNumber=${modelNumber}`);
+
+      const { imageUrl: generatedImageUrl } = response.data;
+      const Stream = await getStreamFromURL(generatedImageUrl);
+
+      await message.reply({
+        body: `𝐀𝐧𝐢𝐦𝐞 𝐀𝐫𝐭 𝐚𝐩𝐩𝐥𝐢𝐞𝐝 ✨\n𝐌𝐨𝐝𝐞𝐥 1 𝐮𝐬𝐞𝐝: ${modelNumber} (${models[modelNumber]})`,
+        attachment: Stream,
+      });
+
+      message.reaction("✅", event.messageID);
+      message.unsend(processingMessage.messageID);
+
+    } catch (error) {
+      console.error(error);
+      message.reply("Failed to apply the Anime filter.⚠");
+    }
+  }
 };
