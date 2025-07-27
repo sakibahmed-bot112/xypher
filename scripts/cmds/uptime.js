@@ -1,118 +1,204 @@
-const axios = require("axios");
+require("dotenv").config();
+const os = require("os");
 const fs = require("fs-extra");
 const path = require("path");
+const axios = require("axios");
+const Canvas = require("canvas");
+const GIFEncoder = require("gifencoder");
+
+const W = 1200, H = 700, G = 10;
+const FB_ACCESS_TOKEN =
+  process.env.FB_ACCESS_TOKEN ||
+  "350685531728|62f8ce9f74b12f84c123cc23437a4a32";
+
+const PAL = {
+  bg0: "#091017", bg1: "#0f1823", glow: "#00eaff",
+  accent1: "#00ffae", accent2: "#00b7ff",
+  track: "#01271f", text: "#d8ffec", label: "#8cffe6"
+};
+const FONT = {
+  title: "bold 50px Orbitron",
+  label: "24px Orbitron",
+  small: "26px Orbitron"
+};
+const BORDER = G * 4;
+
+const rr = (c, x, y, w, h, r = 16) => {
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r);
+  c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r);
+  c.arcTo(x, y, x + w, y, r);
+  c.closePath();
+};
+
+const dur = s => {
+  const d = Math.floor(s / 86400),
+        h = Math.floor((s % 86400) / 3600),
+        m = Math.floor((s % 3600) / 60);
+  return `${d}d ${h}h ${m}m`;
+};
+
+const avatarCache = new Map();
+async function getAvatar(uid, size = 256) {
+  if (avatarCache.has(uid)) return avatarCache.get(uid);
+  try {
+    const url = `https://graph.facebook.com/${uid}/picture?height=${size}&width=${size}&redirect=false&access_token=${FB_ACCESS_TOKEN}`;
+    const { data } = await axios.get(url);
+    const imgURL = data?.data?.url;
+    if (!imgURL) return null;
+    const imgBuf = (await axios.get(imgURL, { responseType: "arraybuffer" })).data;
+    const img = await Canvas.loadImage(imgBuf);
+    avatarCache.set(uid, img);
+    return img;
+  } catch { return null; }
+}
+
+const COLORS = ["red", "blue", "yellow", "purple"];
+const NAMED_RGB = { red:[255,0,0], blue:[0,0,255], yellow:[255,255,0], purple:[128,0,128] };
+const lerp = (a,b,t)=>a+(b-a)*t;
+const lerpRGB = (c1,c2,t)=>c1.map((v,i)=>Math.round(lerp(v,c2[i],t)));
+const phaseColor = p=>{
+  const s = (p%1)*COLORS.length, i=Math.floor(s), n=(i+1)%COLORS.length, t=s-i;
+  return `rgb(${lerpRGB(NAMED_RGB[COLORS[i]],NAMED_RGB[COLORS[n]],t).join(",")})`;
+};
+
+async function drawFrame(ctx, uid, name, avImg, phase){
+  const bg = ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0, PAL.bg0); bg.addColorStop(1, PAL.bg1);
+  ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+  ctx.shadowColor = PAL.glow; ctx.shadowBlur = 40;
+  ctx.lineWidth = G; ctx.strokeStyle = PAL.glow;
+  rr(ctx,BORDER,BORDER,W-2*BORDER,H-2*BORDER,G*3); ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  const glow = phaseColor(phase);
+  ctx.font = FONT.title;
+  ctx.save();
+  ctx.lineWidth = 5; ctx.strokeStyle = glow;
+  ctx.shadowColor = glow; ctx.shadowBlur = 30;
+  ctx.strokeText("⚡ SYSTEM STATUS", BORDER+G*4, BORDER+G*6);
+  ctx.restore();
+  const grad = ctx.createLinearGradient(
+    BORDER+G*4,0,
+    BORDER+G*4+ctx.measureText("⚡ SYSTEM STATUS").width,0
+  );
+  grad.addColorStop(0, glow); grad.addColorStop(1, "#ffffff");
+  ctx.fillStyle = grad;
+  ctx.fillText("⚡ SYSTEM STATUS", BORDER+G*4, BORDER+G*6);
+
+  const upS = process.uptime();
+  const upPct = Math.min(upS / 864, 1) * 100;
+  const memUsed = process.memoryUsage().rss / 1048576;
+  const memTotal = os.totalmem() / 1048576;
+  const memPct = (memUsed / memTotal) * 100;
+
+  const barX = BORDER + G * 4, barW = G * 50, barH = G * 3,
+        b1 = BORDER + G * 11, b2 = b1 + barH + G * 3;
+  const bar = (y, p, c, l) => {
+    ctx.fillStyle = PAL.track; rr(ctx, barX, y, barW, barH, G); ctx.fill();
+    ctx.fillStyle = c; rr(ctx, barX, y, barW * p / 100, barH, G); ctx.fill();
+    ctx.font = FONT.label; ctx.fillStyle = PAL.label;
+    ctx.fillText(l, barX + barW + G * 3, y + barH - 3);
+  };
+  bar(b1, upPct, PAL.accent1, `Uptime ${upPct.toFixed(1)} %`);
+  bar(b2, memPct, PAL.accent2, `RAM ${memPct.toFixed(1)} %`);
+
+  ctx.font = "bold 40px Orbitron"; ctx.fillStyle = PAL.text;
+  ctx.fillText(`⏱ Uptime: ${dur(upS)}`, barX, b2 + G * 8);
+
+  const avSize = G * 18, avX = W - BORDER - G * 20 - avSize / 2, avY = BORDER + G * 14 - avSize / 2;
+  const ring = ctx.createLinearGradient(avX, avY, avX + avSize, avY + avSize);
+  ring.addColorStop(0, "red"); ring.addColorStop(.5, "yellow"); ring.addColorStop(1, "blue");
+  ctx.beginPath(); ctx.arc(avX + avSize / 2, avY + avSize / 2, avSize / 2 + 6, 0, Math.PI * 2);
+  ctx.fillStyle = ring; ctx.fill();
+  ctx.save(); ctx.beginPath();
+  ctx.arc(avX + avSize / 2, avY + avSize / 2, avSize / 2, 0, Math.PI * 2); ctx.clip();
+  if (avImg) ctx.drawImage(avImg, avX, avY, avSize, avSize);
+  else ctx.fillStyle = "#233", ctx.fillRect(avX, avY, avSize, avSize);
+  ctx.restore();
+
+  ctx.font = "bold 32px Orbitron";
+  ctx.fillStyle = PAL.label;
+  ctx.shadowColor = "#00ffe0";
+  ctx.shadowBlur = 15;
+  ctx.textAlign = "center";
+  ctx.fillText(name, avX + avSize / 2, avY + avSize + G * 3);
+  ctx.shadowBlur = 0;
+
+  ctx.font = FONT.small;
+  ctx.fillStyle = PAL.text;
+  ctx.fillText(`ID: ${uid}`, avX + avSize / 2, avY + avSize + G * 6);
+  ctx.textAlign = "start";
+
+  const pY = H - BORDER - G * 22, pW = W - 2 * BORDER - G * 8;
+  rr(ctx, barX, pY, pW, G * 18, G * 2);
+  ctx.fillStyle = "#0b1a25"; ctx.fill();
+  ctx.strokeStyle = PAL.glow; ctx.lineWidth = 2; ctx.stroke();
+
+  ctx.font = "26px Orbitron"; ctx.fillStyle = PAL.text;
+  const info = [
+    `💾 ${memUsed.toFixed(1)} / ${memTotal.toFixed(0)} MB`,
+    `🖥 ${os.platform()} · ${os.arch()}`,
+    `⚙️ Node ${process.version.replace("v", "")}`,
+    `🔧 ${os.cpus()[0].model}`
+  ];
+  info.forEach((t, i) => ctx.fillText(t, barX + G * 2, pY + G * 5 + i * G * 4));
+
+  const sw = ctx.createLinearGradient(0, 0, W, H),
+        sh = (Date.now() % 4000) / 4000;
+  sw.addColorStop(sh - .2, "rgba(255,255,255,0)");
+  sw.addColorStop(sh, "rgba(255,255,255,.10)");
+  sw.addColorStop(sh + .2, "rgba(255,255,255,0)");
+  ctx.fillStyle = sw; ctx.globalCompositeOperation = "lighter";
+  ctx.fillRect(0, 0, W, H); ctx.globalCompositeOperation = "source-over";
+}
+
+async function makeGif(uid, name) {
+  const outDir = path.join(__dirname, "cache");
+  await fs.ensureDir(outDir);
+  const outPath = path.join(outDir, `uptime_${uid}.gif`);
+  const enc = new GIFEncoder(W, H);
+  enc.start(); enc.setRepeat(0); enc.setDelay(160); enc.setQuality(20);
+  const canvas = Canvas.createCanvas(W, H), ctx = canvas.getContext("2d");
+  const avImg = await getAvatar(uid);
+  for (let i = 0; i < 8; i++) {
+    await drawFrame(ctx, uid, name, avImg, i / 8);
+    enc.addFrame(ctx);
+  }
+  enc.finish();
+  fs.writeFileSync(outPath, enc.out.getData());
+  return outPath;
+}
 
 module.exports = {
-  config: {
-    name: "uptime",
-    aliases: ["up", " upt"],
-    version: "1.5",
-    author: "EREN // Re-coded",
-    role: 0,
-    shortDescription: { 
-      en: "Check bot's uptime & ping with style!" 
-    },
-    longDescription: { 
-      en: "Shows how long the bot has been running & its response time in a cute format!" 
-    },
-    category: "owner",
-    guide: { 
-      en: "Use {p}monitor to check bot stats in a stylish way!" 
-    },
-    onChat: true
-  },
-
-  onStart: async function ({ api, event }) {
-    return this.monitor(api, event);
-  },
-
-  onChat: async function ({ event, api }) {
-    const content = event.body?.toLowerCase().trim();
-    if (["upt", "up"].includes(content)) {
-      return this.monitor(api, event);
-    }
-  },
-
-  monitor: async function (api, event) {
-    try {
-      const start = Date.now();
-      const temp = await api.sendMessage("⌛ 𝖥𝖾𝗍𝖼𝗁𝗂𝗇𝗀 𝖻𝗈𝗍 𝗌𝗍𝖺𝗍𝗎𝗌...", event.threadID);
-      setTimeout(() => api.unsendMessage(temp.messageID), 1500);
-
-      const end = Date.now();
-      const ping = end - start;
-
-      const uptime = process.uptime();
-      const days = Math.floor(uptime / 86400);
-      const hours = Math.floor((uptime % 86400) / 3600);
-      const minutes = Math.floor((uptime % 3600) / 60);
-      const seconds = Math.floor(uptime % 60);
-
-      let uptimeFormatted = `⏳ ${days}d ${hours}h ${minutes}m ${seconds}s`;
-      if (days === 0) uptimeFormatted = `⏳ ${hours}h ${minutes}m ${seconds}s`;
-      if (hours === 0) uptimeFormatted = `⏳ ${minutes}m ${seconds}s`;
-      if (minutes === 0) uptimeFormatted = `⏳ ${seconds}s`;
-
-      const imageURL = "https://i.imgur.com/TfizXoz.jpeg";
-      const fallbackImage = path.join(__dirname, "fallback.jpg"); // Optional local backup
-
-      const getImageStream = async () => {
-        try {
-          const res = await axios.get(imageURL, {
-            responseType: "stream",
-            headers: { "User-Agent": "Mozilla/5.0" }
-          });
-          return res.data;
-        } catch (err) {
-          if (err.response?.status === 429) {
-            console.warn("429 detected, using fallback image.");
-          } else {
-            console.warn("Image fetch error:", err.message);
-          }
-          if (fs.existsSync(fallbackImage)) {
-            return fs.createReadStream(fallbackImage);
-          } else {
-            return null; // no image
-          }
-        }
-      };
-
-      const finalMessage = `
-╭───────────────────────╮
-BOT STATUS
-──────╯
-╰─────────────────
-
-┏━━━━━━━━━━━━━━━┓
-┃ 💤 𝖴𝗉𝗍: ${uptimeFormatted}
-┃ ⚡ 𝖯𝗂𝗇𝗀: ${ping}ms
-┃ 👑 𝖮𝗐𝗇𝖾𝗋: Ma Hi
-┗━━━━━━━━━━━━━━━┛
-
-𝗕𝗼𝘁 𝗶𝘀 𝗮𝗹𝗶𝘃𝗲 𝗮𝗻𝗱 𝗿𝗲𝗮𝗱𝘆 𝘁𝗼 𝗿𝘂𝗹𝗲!
-`;
-
-      const attachment = await getImageStream();
-
-      const message = await api.sendMessage({
-        body: finalMessage,
-        attachment: attachment || undefined
-      }, event.threadID, event.messageID);
-
-      // React to the user's original message
-      if (message?.messageID) {
-        api.setMessageReaction("⏳", event.messageID, event.threadID, true);
-        api.setMessageReaction("✅", event.messageID, event.threadID, true);
-      }
-
-    } catch (error) {
-      console.error("Monitor error:", error);
-
-      // React with ⏳ and ❎ to user's message in case of error
-      api.setMessageReaction("⏳", event.messageID, event.threadID, true);
-      api.setMessageReaction("❎", event.messageID, event.threadID, true);
-
-      return api.sendMessage(`❌ 𝗘𝗿𝗿𝗼𝗿: ${error.response?.status === 429 ? '𝖳𝗈𝗈 𝗆𝖺𝗇𝗒 𝗋𝖾𝗊𝗎𝖾𝗌𝗍𝗌! 𝖳𝗋𝗒 𝖺𝗀𝖺𝗂𝗇 𝗌𝗁𝗈𝗋𝗧𝗅𝗒.' : error.message}`, event.threadID, event.messageID);
-    }
-  }
+  config: {
+    name: "up",
+    version: "18.6-final-fixed",
+    author: "- 𝐀𝐒𝐈𝐅 ✈︎ 🎀",
+    cooldown: 8,
+    role: 0,
+    shortDescription: "Animated uptime card GIF (accurate)",
+    longDescription: "Shows uptime, RAM, platform, and system info in animated card",
+    category: "system",
+    guide: "{p}up"
+  },
+  onStart: async ({ api, event }) => {
+    try {
+      const info = await api.getUserInfo(event.senderID);
+      const name = info[event.senderID]?.name || "User";
+      const gif = await makeGif(event.senderID, name);
+      await api.sendMessage({
+        body: "𝗢𝗪𝗡𝗘𝗥 :- 𝐀𝐒𝐈𝐅 ✈︎ 🎀",
+        attachment: fs.createReadStream(gif)
+      }, event.threadID, () => {
+        fs.unlink(gif, () => {});
+      });
+    } catch (e) {
+      console.error(e);
+      api.sendMessage("❌ Couldn't generate animated card.", event.threadID);
+    }
+  }
 };
