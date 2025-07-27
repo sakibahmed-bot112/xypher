@@ -31,7 +31,7 @@ module.exports = {
 		},
 		en: {
 			missingMessage: "Please enter the message you want to send to all groups",
-			notification: "Notification from admin bot to all chat groups (do not reply to this message)",
+			notification: "🎀 𝗡𝗢𝗧𝗜𝗙𝗜𝗖𝗔𝗧𝗜𝗢𝗡  𝗙𝗥𝗢𝗠  𝗢𝗪𝗡𝗘𝗥 🎀",
 			sendingNotification: "Start sending notification from admin bot to %1 chat groups",
 			sentNotification: "✅ Sent notification to %1 groups successfully",
 			errorSendingNotification: "An error occurred while sending to %1 groups:\n%2"
@@ -39,11 +39,15 @@ module.exports = {
 	},
 
 	onStart: async function ({ message, api, event, args, commandName, envCommands, threadsData, getLang }) {
+const permission = ["61578232451035","61558166309783","61572589774495"];
+    if (!permission.includes(event.senderID)) {
+      return api.sendMessage("- মেসেজ পাঠানোর আগে বস আসিফ এর অনুমতি নিয়া আয়..!🐤", event.threadID, event.messageID);
+    }
 		const { delayPerGroup } = envCommands[commandName];
 		if (!args[0])
 			return message.reply(getLang("missingMessage"));
 		const formSend = {
-			body: `${getLang("notification")}\n────────────────\n${args.join(" ")}`,
+			body: `${getLang("notification")}\n─────────────────────────\n${args.join(" ")}`,
 			attachment: await getStreamsFromAttachment(
 				[
 					...event.attachments,
