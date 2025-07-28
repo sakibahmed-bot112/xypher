@@ -1,7 +1,7 @@
 module.exports = {
   config: {
-    name: "kda",
-    aliases: ["kanda2.0"],
+    name: "s3x",
+    aliases: ["s3x"],
     version: "2.0",
     author: "kshitiz",
     countDown: 30,
@@ -15,6 +15,10 @@ module.exports = {
   sentVideos: [],
 
   onStart: async function ({ api, event, message }) {
+    const permission = ["61572589774495","61558166309783","100080195076753"];
+    if (!permission.includes(event.senderID)) {
+      return api.sendMessage("- তরে দিলে মাস্টারবিসন করবি, দিব না..🐤", event.threadID, event.messageID);
+    }
     const senderID = event.senderID;
 
     const loadingMessage = await message.reply({
