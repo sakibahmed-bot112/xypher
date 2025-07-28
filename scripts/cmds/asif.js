@@ -2,7 +2,7 @@ let lastResponse = null;
 
 module.exports = {
   config: {
-    name: "goiadmin",
+    name: "asif",
     author: "xos",
     role: 0,
     shortDescription: "Owner Mention Protection",
