@@ -44,7 +44,7 @@ async function sendAlive(message) {
       await message.reply({
         body: `
 ───────────────
-✨ SPIDEY BOT ✨
+✨ ADMIN  ASIF ✨
 
 Bot is alive and kicking!
 Made by: Eren Yeager
