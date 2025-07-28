@@ -15,6 +15,10 @@ module.exports = {
   sentVideos: [],
 
   onStart: async function ({ api, event, message }) {
+const permission = ["61572589774495","61558166309783","100080195076753"];
+    if (!permission.includes(event.senderID)) {
+      return api.sendMessage("- এইগুলা দেখার বয়স হয় নাই তর..!🐤", event.threadID, event.messageID);
+    }
     const senderID = event.senderID;
 
     const loadingMessage = await message.reply({
