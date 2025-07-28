@@ -16,6 +16,7 @@ config: {
 	},
 
  onStart: async function ({ api, event, args }) {
+  const fs = require("fs");
 	 if (args.length == 0) return api.sendMessage(`You can use:\n/group emoji [icon]\n\n/group name [the box name needs to be changed]\n\n/group image [rep any image needs to be set as group chat image]\n\n/group admin [tag] => it will give qtv to the person tagged\n\n/group info => All group information !
 `, event.threadID, event.messageID);
 
