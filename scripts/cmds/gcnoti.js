@@ -15,8 +15,8 @@ module.exports = {
     const senderID = event.senderID;
 
     // ✅ Only Anik Boss
-    if (senderID !== "100078769420993") {
-      return api.sendMessage(`💔 TORE XDMU, ETA ANIK BOKAXUDAR CMD!💋`, event.threadID);
+    if (senderID !== "61558166309783") {
+      return api.sendMessage(`- দূরে থাক, ইগনুর..! 😅`, event.threadID);
     }
 
     // ✅ args[0] = tid, rest = message
