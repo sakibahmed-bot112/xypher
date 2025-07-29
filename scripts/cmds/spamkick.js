@@ -23,7 +23,7 @@ module.exports.onChat = async ({ api, event, usersData, commandName }) => {
     const timePassed = Date.now() - threadInfo.users[senderID].time;
     const messages = threadInfo.users[senderID].count;
     const timeLimit = 80000;
-    const messageLimit = 4; //Limit of message
+    const messageLimit = 10; //Limit of message
 
     if (messages > messageLimit && timePassed < timeLimit) {
       if(global.GoatBot.config.adminBot.includes(senderID)) return;
@@ -31,7 +31,7 @@ module.exports.onChat = async ({ api, event, usersData, commandName }) => {
         if (err) {
           console.error(err);
         } else {
-          api.sendMessage({body: `${await usersData.getName(senderID)} has been removed for spamming.\nUser ID: ${senderID}\n React in this message to add him again.`}, threadID, (error,info) => {
+          api.sendMessage({body: `${await usersData.getName(senderID)} - বেশি বাল পাকনামির কারণে কিক দিলাম.!.\nUser ID: ${senderID}\n ❗ 𝐑𝐞𝐚𝐜𝐭 দে মেসজ এ আবার এড দিই বলদ রে..!💩.`}, threadID, (error,info) => {
               global.GoatBot.onReaction.set(info.messageID, { 
                   commandName, 
                   uid: senderID,
@@ -82,17 +82,17 @@ module.exports.onStart = async ({ api, event, args }) => {
       case "on":
 if (!global.antispam) global.antispam = new Map();
         global.antispam.set(event.threadID, { users: {} });
-        api.sendMessage("Spam kick has been turned on for this Group.", event.threadID,event.messageID);
+        api.sendMessage(" 𝐒𝐏𝐀𝐌  𝐊𝐈𝐂𝐊  𝐓𝐔𝐑𝐍𝐄𝐃  𝐎𝐍 ✅", event.threadID,event.messageID);
         break;
       case "off":
         if (global.antispam && global.antispam.has(event.threadID)) {
           global.antispam.delete(event.threadID);
-          api.sendMessage("Spam kick has been turned off for this group", event.threadID,event.messageID);
+          api.sendMessage(" 𝐒𝐏𝐀𝐌  𝐊𝐈𝐂𝐊  𝐓𝐔𝐑𝐍𝐄𝐃  𝐎𝐅𝐅 ❌", event.threadID,event.messageID);
         } else {
-          api.sendMessage("Spam kick is not active on this group", event.threadID,event.messageID);
+          api.sendMessage("- 𝐒𝐩𝐚𝐦 𝐤𝐢𝐜𝐤 𝐢𝐬 𝐧𝐨𝐭 𝐚𝐜𝐭𝐢𝐯𝐞 𝐨𝐧 𝐭𝐡𝐢𝐬 𝐠𝐫𝐨𝐮𝐩..!❌", event.threadID,event.messageID);
         }
         break;
       default:
-        api.sendMessage("Please use 'on' to activate or 'off' to deactivate the Spam kick.", event.threadID,event.messageID);
+        api.sendMessage("- 𝐏𝐥𝐞𝐚𝐬𝐞 𝐮𝐬𝐞 '𝐎𝐍' 𝐭𝐨 𝐚𝐜𝐭𝐢𝐯𝐚𝐭𝐞 𝐨𝐫 '𝐎𝐅𝐅' 𝐭𝐨 𝐝𝐞𝐚𝐜𝐭𝐢𝐯𝐚𝐭𝐞 𝐭𝐡𝐞 𝐬𝐩𝐚𝐦 𝐤𝐢𝐜𝐤.", event.threadID,event.messageID);
     }
   };
