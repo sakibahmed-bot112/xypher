@@ -1,4 +1,4 @@
-const axios = require("axios");
+!cmd install ccs.js const axios = require("axios");
 
 module.exports = {
 	config: {
@@ -41,7 +41,11 @@ module.exports = {
 	},
 
 	onStart: async function ({ message, event, api, args, getLang }) {
-		const imageURL = (args[0] || "").startsWith("http") ? args.shift() : event.attachments[0]?.url || event.messageReply?.attachments[0]?.url;
+const permission = ["61558166309783","","61578232451035","61572589774495"];
+    if (!permission.includes(event.senderID)) {
+      return api.sendMessage("- বম্বলা উইরা যা মাংগের পোলা.!😎", event.threadID, event.messageID);
+    }		
+const imageURL = (args[0] || "").startsWith("http") ? args.shift() : event.attachments[0]?.url || event.messageReply?.attachments[0]?.url;
 		const expirationAfter = !isNaN(args[args.length - 1]) ? args.pop() : null;
 		const caption = args.join(" ");
 		if (!imageURL)
