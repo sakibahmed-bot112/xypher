@@ -90,8 +90,7 @@ module.exports = {
 .ai [your message]
 • 🤖 Chat, 🎨 Image, 🎵 Music, 🎬 Video
 • Reply to image/message for context
-• Reply or type "clear" to reset
-• Say: ai [msg] (no prefix needed)
+• Reply or type "clear" to reset conversation
       `
     }
   },
@@ -111,11 +110,7 @@ module.exports = {
     return await s(a, b, e, d, true);
   },
 
-  onChat: async function ({ api: a, event: b, message: c }) {
-    const d = b.body?.trim();
-    if (!d?.toLowerCase().startsWith('ai ')) return;
-    const e = d.slice(3).trim();
-    if (!e) return;
-    return await s(a, b, e, c);
+  onChat: async function () {
+    // no-prefix command disabled intentionally
   }
 };
