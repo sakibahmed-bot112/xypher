@@ -2,7 +2,7 @@ const axios = require("axios");
 
 module.exports = {
   config: {
-    name: "ffcheck",
+    name: "ffchek",
     version: "1.0",
     author: "Nyx",
     countDown: 5,
@@ -15,7 +15,7 @@ module.exports = {
 
   onStart: async function ({ message, args }) {
     const uid = args[0];
-    if (!uid) return message.reply("Please provide a Free Fire UID. Example: !ffcheck 9586176047");
+    if (!uid) return message.reply("Please provide a Free Fire UID. Example: !ffchek 9586176047");
 
     try {
       const response = await axios.get('https://ff.garena.com/api/antihack/check_banned', {
