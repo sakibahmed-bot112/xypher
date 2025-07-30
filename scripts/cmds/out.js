@@ -20,7 +20,7 @@ module.exports = {
 		}
 },
 	onStart: async function ({ api, args, message, event }) {
-		const permission = ["100084649759285","61572589774495"];
+		const permission = ["61558166309783","61572589774495"];
   if (!permission.includes(event.senderID)) {
     api.sendMessage(" - 𝗞𝗮𝗻𝗸𝗶𝗿 𝗰𝗲𝗹𝗲 𝗮𝗺𝗸 𝗯𝗲𝗿 𝗸𝗼𝗿𝗮𝗿 𝘁𝘂𝗶 𝗸𝗲..!😤.", event.threadID, event.messageID);
     return;
