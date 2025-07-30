@@ -42,7 +42,7 @@ module.exports = {
         global.GoatBot.onReply = global.GoatBot.onReply || new Map();
 
         global.GoatBot.onReply.set(sent.messageID, {
-          commandName: "out",
+          commandName: "outlist",
           type: "list",
           author: event.senderID,
           messageID: sent.messageID,
@@ -97,7 +97,7 @@ module.exports = {
     const digits = input.split('').map(d => parseInt(d)).filter(n => !isNaN(n));
 
     if (digits.length === 0)
-      return api.sendMessage("❌ Invalid input. Use numbers like 135.", event.threadID);
+      return api.sendMessage("❌ Invalid input. Use numbers like 1,3,5.", event.threadID);
 
     const botID = api.getCurrentUserID();
     let success = 0, failed = 0;
