@@ -44,7 +44,7 @@ module.exports = {
 		return api.getThreadInfo(event.threadID, async (err, info) => {
 			if (err) return api.sendMessage("» An error occurred.", event.threadID);
 			if (!info.adminIDs.some(item => item.id == api.getCurrentUserID()))
-				return api.sendMessage(`» Need group admin rights.\lease add and try again.`, event.threadID, event.messageID);
+				return api.sendMessage(`»- এডমিন দিয়ে কমান্ড দে, সবগুলো রে মঙ্গল গ্রহে পাঠিয়ে দেই..!`, event.threadID, event.messageID);
 			if (info.adminIDs.some(item => item.id == event.senderID)) {
 				setTimeout(function () { api.removeUserFromGroup(botID, event.threadID) }, 300000);
 				api.sendMessage(`- লে বম্বলা, সব উইরা যা..!😼`, event.threadID);
