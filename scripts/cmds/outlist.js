@@ -34,7 +34,7 @@ module.exports = {
           `${i + 1}. ${g.name}\nTID: ${g.threadID}`
         ).join("\n\n");
 
-        const msg = `📂 𝐆𝐫𝐨𝐮𝐩𝐬 𝐛𝐨𝐭 𝐢𝐬 𝐢𝐧:\n\n${list}\n\n📌 Reply with number(s) (e.g. 135) to remove bot from those groups.`;
+        const msg = `📂 𝐆𝐫𝐨𝐮𝐩𝐬 𝐛𝐨𝐭 𝐢𝐬 𝐢𝐧:\n\n${list}\n\n📌 Reply with number(s) (e.g. 1,3,5) to remove bot from those groups.`;
 
         const sent = await api.sendMessage(msg, event.threadID);
 
