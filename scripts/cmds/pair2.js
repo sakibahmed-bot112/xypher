@@ -1,111 +1,121 @@
 const axios = require("axios");
 const fs = require("fs-extra");
+const Jimp = require("jimp");
 
 module.exports = {
   config: {
-    name: "pair",
-    countDown: 10,
+    name: "pair2",
+    aliases: [],
+    version: "1.5",
+    author: "asif",
+    countDown: 5,
     role: 0,
-    author: "✨ Eren Yeh ✨",
-    shortDescription: {
-      en: "Get to know your partner"
-    },
-    longDescription: {
-      en: "Know your destiny and know who you will complete your life with"
-    },
-    category: "LOVE",
-    guide: {
-      en: "{pn}"
-    }
+    shortDescription: "Pair two users in a glowing frame love style",
+    longDescription: "Glow ফ্রেম সহ পেয়ার",
+    category: "love",
+    guide: "{pn} [২ জন মেনশন করলে ওদের pair করবে]"
   },
 
-  onStart: async function ({ api, event, usersData }) {
-    const { loadImage, createCanvas } = require("canvas");
-    const pathImg = __dirname + "/assets/background.png";
-    const pathAvt1 = __dirname + "/assets/any.png";
-    const pathAvt2 = __dirname + "/assets/avatar.png";
-
-    const id1 = event.senderID;
-    const name1 = await usersData.getName(id1);
-    const ThreadInfo = await api.getThreadInfo(event.threadID);
-    const all = ThreadInfo.userInfo;
-
-    let gender1 = null;
-    for (const user of all) {
-      if (user.id === id1) gender1 = user.gender;
-    }
-
+  onStart: async function({ api, event, threadsData, usersData }) {
+    const { threadID, messageID, senderID, mentions, type, messageReply } = event;
+    const { participantIDs } = await api.getThreadInfo(threadID);
     const botID = api.getCurrentUserID();
-    let candidates = all.filter(user =>
-      user.id !== id1 && user.id !== botID &&
-      (
-        (gender1 === "FEMALE" && user.gender === "MALE") ||
-        (gender1 === "MALE" && user.gender === "FEMALE") ||
-        (!gender1 || !user.gender)
-      )
-    );
 
-    if (candidates.length === 0) {
-      return api.sendMessage("No suitable partner found in this chat.", event.threadID, event.messageID);
+    let user1, user2;
+    const mentionIDs = Object.keys(mentions);
+
+    if (mentionIDs.length === 2) {
+      [user1, user2] = mentionIDs;
+    } else if (mentionIDs.length === 1) {
+      user1 = senderID;
+      user2 = mentionIDs[0];
+    } else if (type === "message_reply" && messageReply.senderID !== senderID) {
+      user1 = senderID;
+      user2 = messageReply.senderID;
+    } else {
+      const others = participantIDs.filter(id => id !== senderID && id !== botID);
+      if (others.length === 0)
+        return api.sendMessage("⚠️ pairing করার মতো কেউ নেই!", threadID, messageID);
+      user1 = senderID;
+      user2 = others[Math.floor(Math.random() * others.length)];
     }
 
-    const randomPartner = candidates[Math.floor(Math.random() * candidates.length)];
-    const id2 = randomPartner.id;
-    const name2 = await usersData.getName(id2) || "Unknown";
+    try {
+      const name1 = (await usersData.get(user1)).name;
+      const name2 = (await usersData.get(user2)).name;
+      const lovePercent = Math.floor(Math.random() * 101);
 
-    const percentageList = [
-      `${Math.floor(Math.random() * 100) + 1}`, "0", "-1", "99,99", "-99", "-100", "101", "0,01"
-    ];
-    const tile = percentageList[Math.floor(Math.random() * percentageList.length)];
+      // ⬇️ প্রোফাইল পিক ডাউনলোড
+      const img1Data = (await axios.get(
+        `https://graph.facebook.com/${user1}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
+        { responseType: "arraybuffer" }
+      )).data;
 
-    const backgroundUrl = "https://i.ibb.co/RBRLmRt/Pics-Art-05-14-10-47-00.jpg";
+      const img2Data = (await axios.get(
+        `https://graph.facebook.com/${user2}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
+        { responseType: "arraybuffer" }
+      )).data;
 
-    // Download avatars and background
-    const getAvatar = async (id, path) => {
-      const avatar = (
-        await axios.get(`https://graph.facebook.com/${id}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`, {
-          responseType: "arraybuffer"
-        })
-      ).data;
-      fs.writeFileSync(path, Buffer.from(avatar, "utf-8"));
-    };
+      fs.writeFileSync(__dirname + "/cache/avt1.png", Buffer.from(img1Data, "utf-8"));
+      fs.writeFileSync(__dirname + "/cache/avt2.png", Buffer.from(img2Data, "utf-8"));
 
-    await getAvatar(id1, pathAvt1);
-    await getAvatar(id2, pathAvt2);
+      const size = 300;
+      const glowSize = 20; // glow এর পুরুত্ব
 
-    const bgData = (await axios.get(backgroundUrl, { responseType: "arraybuffer" })).data;
-    fs.writeFileSync(pathImg, Buffer.from(bgData, "utf-8"));
+      const createGlowFrame = async (imageBuffer) => {
+        const avatar = await Jimp.read(imageBuffer);
+        avatar.resize(size, size);
 
-    // Canvas drawing
-    const baseImage = await loadImage(pathImg);
-    const baseAvt1 = await loadImage(pathAvt1);
-    const baseAvt2 = await loadImage(pathAvt2);
-    const canvas = createCanvas(baseImage.width, baseImage.height);
-    const ctx = canvas.getContext("2d");
+        const totalSize = size + glowSize * 2;
+        const frame = new Jimp(totalSize, totalSize);
 
-    ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
-    ctx.drawImage(baseAvt1, 111, 175, 330, 330);
-    ctx.drawImage(baseAvt2, 1018, 173, 330, 330);
+        // Gradient Glow তৈরি করো
+        for (let i = 0; i < glowSize; i++) {
+          const mixColor = Jimp.rgbaToInt(
+            138 + Math.floor(i * 6),  // purple to red
+            43 + Math.floor(i * 3),   // purple to blue
+            226 - Math.floor(i * 4),  // purple to blue fade
+            255
+          );
+          frame.scan(i, i, totalSize - i * 2, totalSize - i * 2, function(x, y, idx) {
+            this.bitmap.data[idx + 0] = (mixColor >> 24) & 255;
+            this.bitmap.data[idx + 1] = (mixColor >> 16) & 255;
+            this.bitmap.data[idx + 2] = (mixColor >> 8) & 255;
+            this.bitmap.data[idx + 3] = 255;
+          });
+        }
 
-    const imageBuffer = canvas.toBuffer();
-    fs.writeFileSync(pathImg, imageBuffer);
-    fs.removeSync(pathAvt1);
-    fs.removeSync(pathAvt2);
+        frame.composite(avatar, glowSize, glowSize);
+        return frame;
+      };
 
-    return api.sendMessage({
-      body: `╭── 𝐏𝐚𝐢𝐫 𝐑𝐞𝐬𝐮𝐥𝐭 ──╮\n\n✨ 𝐇𝐞𝐲 ${name1}~!\n\n💘 𝐘𝐨𝐮𝐫 𝐬𝐨𝐮𝐥𝐦𝐚𝐭𝐞 𝐢𝐬: ${name2}!\n\n❤️ 𝐋𝐨𝐯𝐞 𝐌𝐚𝐭𝐜𝐡: ${tile}%\n\n⛓️ 𝐃𝐞𝐬𝐭𝐢𝐧𝐲 𝐛𝐫𝐨𝐮𝐠𝐡𝐭 𝐲𝐨𝐮 𝐭𝐰𝐨 𝐭𝐨𝐠𝐞𝐭𝐡𝐞𝐫~\n\n╰── ✨ Eren Yeh ✨ ──╯`,
-      mentions: [
-        { tag: name1, id: id1 },
-        { tag: name2, id: id2 }
-      ],
-      attachment: fs.createReadStream(pathImg)
-    }, event.threadID, () => fs.unlinkSync(pathImg), event.messageID);
-  },
+      const framed1 = await createGlowFrame(__dirname + "/cache/avt1.png");
+      const framed2 = await createGlowFrame(__dirname + "/cache/avt2.png");
 
-  onChat: async function (context) {
-    const { event, message } = context;
-    if (event.body && event.body.toLowerCase() === "pair") {
-      this.onStart(context);
+      // ⬅️➡️ পাশাপাশি বসাও
+      const combined = new Jimp(framed1.bitmap.width + framed2.bitmap.width + 20, framed1.bitmap.height);
+      combined.composite(framed1, 0, 0);
+      combined.composite(framed2, framed1.bitmap.width + 20, 0);
+
+      const finalPath = __dirname + "/cache/paired.png";
+      await combined.writeAsync(finalPath);
+
+      const msg = {
+        body: `🥰- নাও তোমাদের জুটি..!!
+💌- ২০০ বছর এর প্রেমের শুভকামনা রাইলো.!💘
+💖- ম্যাচিং রেট: ${lovePercent}%
+💑- @${name1} ❤️ @${name2}`,
+        mentions: [
+          { id: user1, tag: `@${name1}` },
+          { id: user2, tag: `@${name2}` }
+        ],
+        attachment: fs.createReadStream(finalPath)
+      };
+
+      return api.sendMessage(msg, threadID, messageID);
+    } catch (err) {
+      console.error("❌ Error:", err);
+      return api.sendMessage("❌ pairing করতে সমস্যা হয়েছে!", threadID, messageID);
     }
   }
 };
