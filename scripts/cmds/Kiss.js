@@ -41,17 +41,7 @@ module.exports = {
     const pathSave = `${__dirname}/tmp/${one}_${two}_kiss.png`;
     fs.writeFileSync(pathSave, Buffer.from(img));
 
-    const content = "- 𝗨𝗺𝗺𝗺𝗺𝗺𝗺𝗮𝗵 𝗯𝗯𝘆..!😘";
-    message.reply({
-      body: `${content || "Bópppp 😵‍💫😵"}`,
-      attachment: fs.createReadStream(pathSave)
-    }, () => fs.unlinkSync(pathSave));
-  }
-};
-    const pathSave = `${__dirname}/tmp/${one}_${two}kiss.png`;
-    fs.writeFileSync(pathSave, Buffer.from(img));
-
-    const content = "😘😘";
+    const content = "- 𝗨𝗺𝗺𝗺𝗺𝗮𝗵 𝗯𝗯𝘆..!😘";
     message.reply({
       body: `${content || "Bópppp 😵‍💫😵"}`,
       attachment: fs.createReadStream(pathSave)
