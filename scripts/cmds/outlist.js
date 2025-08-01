@@ -1,64 +1,45 @@
+const GROUPS_PER_PAGE = 10;
+
 module.exports = {
   config: {
     name: "out",
-    version: "2.0",
+    version: "2.3",
     author: "Asif",
     countDown: 5,
     role: 2,
     shortDescription: "Bot leave groups by list or leave all",
-    longDescription: "Use 'out list' to show groups and leave by number(s), or 'out all' to leave all groups at once.",
+    longDescription: "Use 'out list' to show groups page by page and leave by number(s), or 'out all' to leave all groups at once.",
     category: "admin",
     guide: {
-      en: "{p}out list → show group list\n{p}out all → leave all groups"
+      en: "{p}out list → show group list (10 per page)\n{p}out all → leave all groups"
     },
   },
 
   onStart: async function ({ api, event, args }) {
     const input = args[0];
-
     if (!input)
-      return api.sendMessage("❓ 𝗨𝘀𝗲:\n• 𝗢𝘂𝘁 𝗟𝗶𝘀𝘁 → 𝐒𝐡𝐨𝐰 𝐠𝐫𝐨𝐮𝐩 𝐥𝐢𝐬𝐭\n• 𝗢𝘂𝘁 𝗔𝗹𝗹 → 𝐋𝐞𝐚𝐯𝐞 𝐚𝐥𝐥 𝐠𝐫𝐨𝐮𝐩𝐬", event.threadID);
+      return api.sendMessage("❓ 𝗨𝘀𝗲:\n• out list\n• out all", event.threadID);
 
     const botID = api.getCurrentUserID();
 
     if (input.toLowerCase() === "list") {
-      // === out list ===
       try {
-        const threads = await api.getThreadList(50, null, ["INBOX"]);
-        const groupThreads = threads.filter(t => t.isGroup && t.name !== null);
+        const threads = await getAllThreads(api);
+        const groupThreads = threads.filter(t => t.isGroup);
 
         if (groupThreads.length === 0)
           return api.sendMessage("🤖 Bot is not in any group chat.", event.threadID);
 
-        const list = groupThreads.map((g, i) =>
-          `${i + 1}. ${g.name}\nTID: ${g.threadID}`
-        ).join("\n\n");
-
-        const msg = `📂 𝐆𝐫𝐨𝐮𝐩𝐬 𝐛𝐨𝐭 𝐢𝐬 𝐢𝐧:\n\n${list}\n\n📌 Reply with number(s) (e.g. 135) to remove bot from those groups.`;
-
-        const sent = await api.sendMessage(msg, event.threadID);
-
-        global.GoatBot = global.GoatBot || {};
-        global.GoatBot.onReply = global.GoatBot.onReply || new Map();
-
-        global.GoatBot.onReply.set(sent.messageID, {
-          commandName: "out",
-          type: "list",
-          author: event.senderID,
-          messageID: sent.messageID,
-          groupThreads
-        });
-
+        sendGroupListPage(api, event, groupThreads, 0);
       } catch (err) {
         console.error("Error in out list:", err);
         api.sendMessage("❌ Error while getting group list.", event.threadID);
       }
 
     } else if (input.toLowerCase() === "all") {
-      // === out all ===
       try {
-        const threads = await api.getThreadList(100, null, ["INBOX"]);
-        const groupThreads = threads.filter(t => t.isGroup && t.name !== null);
+        const threads = await getAllThreads(api);
+        const groupThreads = threads.filter(t => t.isGroup);
 
         if (groupThreads.length === 0)
           return api.sendMessage("🤖 Bot is not in any group chat.", event.threadID);
@@ -77,7 +58,6 @@ module.exports = {
         }
 
         api.sendMessage(`✅ Done\n➡️ Left: ${success} group(s)\n❌ Failed: ${failed}`, event.threadID);
-
       } catch (err) {
         console.error("Error in out all:", err);
         api.sendMessage("❌ Failed to leave all groups.", event.threadID);
@@ -89,20 +69,31 @@ module.exports = {
   },
 
   onReply: async function ({ api, event, Reply }) {
-    const { author, groupThreads } = Reply;
+    const { author, groupThreads, page } = Reply;
+    const input = event.body.trim().toUpperCase();
+
     if (event.senderID !== "61558166309783")
       return api.sendMessage("⛔ |- আমাকে বের করার তুই কে..!🙄", event.threadID);
 
-    const input = event.body.replace(/\s+/g, '');
-    const digits = input.split('').map(d => parseInt(d)).filter(n => !isNaN(n));
+    // Pagination: A = page 0, B = page 1, etc.
+    if (/^[A-Z]$/.test(input)) {
+      const nextPage = input.charCodeAt(0) - 65;
+      sendGroupListPage(api, event, groupThreads, nextPage);
+      return;
+    }
 
-    if (digits.length === 0)
-      return api.sendMessage("❌ Invalid input. Use numbers like 1,3,5.", event.threadID);
+    // Otherwise, assume number(s)
+    const indices = input.split(/[\s,]+/)
+      .map(n => parseInt(n))
+      .filter(n => !isNaN(n));
+
+    if (indices.length === 0)
+      return api.sendMessage("❌ Invalid input. Use numbers like 1,3,12", event.threadID);
 
     const botID = api.getCurrentUserID();
     let success = 0, failed = 0;
 
-    for (const index of digits) {
+    for (const index of indices) {
       if (index < 1 || index > groupThreads.length) {
         failed++;
         continue;
@@ -120,9 +111,56 @@ module.exports = {
       }
     }
 
-    api.sendMessage(
-      `✅ Finished\n➡️ Left: ${success} group(s)\n❌ Failed: ${failed}`,
-      event.threadID
-    );
+    api.sendMessage(`✅ Finished\n➡️ Left: ${success} group(s)\n❌ Failed: ${failed}`, event.threadID);
   }
 };
+
+// ✅ Helper to fetch all group threads (with full pagination)
+async function getAllThreads(api) {
+  let allThreads = [];
+  let limit = 100;
+  let timestamp = null;
+
+  while (true) {
+    const threads = await api.getThreadList(limit, timestamp, []);
+    if (!threads.length) break;
+
+    allThreads = allThreads.concat(threads);
+    timestamp = threads[threads.length - 1].timestamp;
+
+    if (threads.length < limit) break;
+  }
+
+  return allThreads;
+}
+
+// ✅ Pagination system
+function sendGroupListPage(api, event, groupThreads, pageIndex) {
+  const start = pageIndex * GROUPS_PER_PAGE;
+  const end = start + GROUPS_PER_PAGE;
+  const pageThreads = groupThreads.slice(start, end);
+
+  if (pageThreads.length === 0)
+    return api.sendMessage("❌ No moree 👺", event.threadID);
+
+  const list = pageThreads.map((g, i) =>
+    `${start + i + 1}. ${g.name || "Unnamed Group"}\nTID: ${g.threadID}`
+  ).join("\n\n");
+
+  const nextHint = `\n\n➡️ Reply with A, B, C... to see next pages.\n📌 Or reply with number(s) like '1,3,12' to remove bot from those groups.`;
+
+  api.sendMessage(`📂 Group List (Page ${String.fromCharCode(65 + pageIndex)}):\n\n${list}${nextHint}`, event.threadID)
+    .then(sent => {
+      global.GoatBot = global.GoatBot || {};
+      global.GoatBot.onReply = global.GoatBot.onReply || new Map();
+
+      global.GoatBot.onReply.set(sent.messageID, {
+        commandName: "out",
+        type: "list",
+        author: event.senderID,
+        messageID: sent.messageID,
+        groupThreads,
+        page: pageIndex
+      });
+    });
+}
