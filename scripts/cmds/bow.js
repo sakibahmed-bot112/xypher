@@ -53,10 +53,10 @@ module.exports = {
       // মেসেজ সেন্ড করে msgID স্টোর করি
       const sent = await api.sendMessage({ body: framedMessage, attachment: stream }, event.threadID, event.messageID);
 
-      // ১০ সেকেন্ড (10000 মিলিসেকেন্ড) পরে আনসেন্ট
+      // ২৫ সেকেন্ড (25000 মিলিসেকেন্ড) পরে আনসেন্ট
       setTimeout(() => {
         api.unsendMessage(sent.messageID);
-      }, 10000);
+      }, 25000);
 
     } catch (error) {
       api.sendMessage("ত্রুটি: " + error.message, event.threadID, event.messageID);
