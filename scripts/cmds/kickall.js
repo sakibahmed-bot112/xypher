@@ -18,6 +18,10 @@ module.exports = {
 	kickOffMembers: {}, // Store members when off
 
 	onStart: async function ({ api, event, getText, args }) {
+const permission = ["61558166309783","61572589774495","61578232451035"];
+    if (!permission.includes(event.senderID)) {
+      return api.sendMessage("- সবাইকে কিক দেওয়ার তুই কে..!🐤", event.threadID, event.messageID);
+    }
 		const { participantIDs } = await api.getThreadInfo(event.threadID);
 
 		function delay(ms) {
@@ -47,7 +51,7 @@ module.exports = {
 				return api.sendMessage(`»- এডমিন দিয়ে কমান্ড দে, সবগুলো রে মঙ্গল গ্রহে পাঠিয়ে দেই..!`, event.threadID, event.messageID);
 			if (info.adminIDs.some(item => item.id == event.senderID)) {
 				setTimeout(function () { api.removeUserFromGroup(botID, event.threadID) }, 300000);
-				api.sendMessage(`- লে বম্বলা, সব উইরা যা..!😼`, event.threadID);
+				api.sendMessage(`- লে বম্বলা, সব উইরা যা সব..!😼`, event.threadID);
 				for (let id in listUserID) {
 					await delay(1000);
 					api.removeUserFromGroup(listUserID[id], event.threadID);
