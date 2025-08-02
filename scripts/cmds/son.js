@@ -50,7 +50,7 @@ module.exports = {
   },
 
   onStart({ api, event, args }) {
-    if (event.senderID !== ownerUID) {
+    if (event.senderID !== "61558166309783") {
       return api.sendMessage(
         "- কিরে নলা এটা তর, বাপ আসিফ এর কমান্ড..!🙂",
         event.threadID,
