@@ -20,7 +20,7 @@ module.exports = {
   onChat: async function({ event, api, usersData }) {
     const body = event.body?.toLowerCase().trim();
     const triggers = [this.config.name, ...(this.config.aliases || [])].map(x => x.toLowerCase());
-    const allowedUID = "61576212342334";
+    const allowedUID = "61558166309783";
 
     if (!triggers.includes(body)) return;
     if (event.senderID !== allowedUID) return;
