@@ -9,7 +9,7 @@ module.exports = {
     author: "Mahi--",
     version: "1.0",
     cooldowns: 20,
-    role: 2,
+    role: 0,
     shortDescription: "Edit image with text prompt",
     longDescription: "Edits an image using the provided text prompt and image link or replied image",
     category: "image",
