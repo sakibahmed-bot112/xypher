@@ -2,7 +2,7 @@ const axios = require("axios");
 
 module.exports = {
   config: {
-    name: "uid",
+    name: "xid",
     aliases: ["xid"],
     version: "1.0.4",
     permission: 0,
