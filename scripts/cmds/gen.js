@@ -19,7 +19,7 @@ module.exports = {
     if (!prompt)
       return message.reply("❌ Please provide a prompt.\nExample: gen neko girl in rain");
 
-    const url = `https://zeehao-xcos.onrender.com/mahi/poli?prompt=${encodeURIComponent(prompt)}`;
+    const url = `https://sivexis-mahi.vercel.app/api/poli?prompt=${encodeURIComponent(prompt)}`;
 
     try {
       const response = await axios.get(url, { responseType: "stream" });
