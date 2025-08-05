@@ -125,12 +125,12 @@ async function drawFrame(ctx, uid, name, avImg, phase){
   ctx.shadowColor = "#00ffe0";
   ctx.shadowBlur = 15;
   ctx.textAlign = "center";
-  ctx.fillText(name, avX + avSize / 2, avY + avSize + G * 3);
+  ctx.fillText(name, avX + avSize / 2, avY + avSize + G * 4); // ⬅ নাম নিচে
   ctx.shadowBlur = 0;
 
   ctx.font = FONT.small;
   ctx.fillStyle = PAL.text;
-  ctx.fillText(`ID: ${uid}`, avX + avSize / 2, avY + avSize + G * 6);
+  ctx.fillText(`ID: ${uid}`, avX + avSize / 2, avY + avSize + G * 7); // ⬅ UID নিচে
   ctx.textAlign = "start";
 
   const pY = H - BORDER - G * 22, pW = W - 2 * BORDER - G * 8;
