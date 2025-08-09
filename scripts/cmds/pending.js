@@ -37,7 +37,7 @@ module.exports = {
       for (const group of Reply.pending) {
         const prefix = global.GoatBot.config.prefix[group.threadID] || global.GoatBot.config.prefix.default;
         const msg = `╭━「 ✅ 𝐆𝐫𝐨𝐮𝐩 𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 」
-┃📍 𝐆𝐥𝐨𝐛𝐚𝐥 𝐏𝐫𝐞𝐟𝐢𝐱: -
+┃📍 𝐆𝐥𝐨𝐛𝐚𝐥 𝐏𝐫𝐞𝐟𝐢𝐱: ! 
 ┃👥 𝐓𝐡𝐫𝐞𝐚𝐝 𝐏𝐫𝐞𝐟𝐢𝐱: ${prefix}
 ┃🧸 𝐒𝐭𝐚𝐭𝐮𝐬: Connected 🎉
 ╰━━━━━━━━━━━━━╮
@@ -60,7 +60,7 @@ module.exports = {
       const group = Reply.pending[ArYanIndex - 1];
       const prefix = global.GoatBot.config.prefix[group.threadID] || global.GoatBot.config.prefix.default;
       const msg = `╭━「 ✅ 𝐆𝐫𝐨𝐮𝐩 𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 」
-┃📍 𝐆𝐥𝐨𝐛𝐚𝐥 𝐏𝐫𝐞𝐟𝐢𝐱: -
+┃📍 𝐆𝐥𝐨𝐛𝐚𝐥 𝐏𝐫𝐞𝐟𝐢𝐱: ! 
 ┃👥 𝐓𝐡𝐫𝐞𝐚𝐝 𝐏𝐫𝐞𝐟𝐢𝐱: ${prefix}
 ┃🧸 𝐒𝐭𝐚𝐭𝐮𝐬: Connected 🎉
 ╰━━━━━━━━━━━━━╮
