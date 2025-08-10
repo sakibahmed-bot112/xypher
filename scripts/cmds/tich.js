@@ -122,7 +122,7 @@ function clearOldSession(p1, p2, threadID) {
 
 module.exports = {
   config: {
-    name: "tic",
+    name: "tich",
     version: "4.0",
     author: "Asif",
     role: 0,
