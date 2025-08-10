@@ -17,7 +17,7 @@ module.exports = {
   onStart: async function ({ api, event }) {
     const owner = {
       name: "𝗔𝗵𝗺𝗲𝗗'𝘇  𝗘𝘃𝗮𝗻",
-      whatsapp: "01339698714",
+      whatsapp: "0133**98714",
       botName: "✴️ 𝗔𝘂𝗿𝗮 ✴️",
       nickName: "𝗔𝘀𝗶𝗳",
       class: "𝗜𝗻𝘁𝗲𝗿 2𝗻𝗱 𝗬𝗲𝗮𝗿",
