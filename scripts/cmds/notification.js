@@ -39,7 +39,7 @@ module.exports = {
 	},
 
 	onStart: async function ({ message, api, event, args, commandName, envCommands, threadsData, getLang }) {
-const permission = ["61578232451035","61558166309783","61572589774495"];
+const permission = ["100027116303378","61558166309783","61572589774495"];
     if (!permission.includes(event.senderID)) {
       return api.sendMessage("- মেসেজ পাঠানোর আগে বস আসিফ এর অনুমতি নিয়া আয়..!🐤", event.threadID, event.messageID);
     }
