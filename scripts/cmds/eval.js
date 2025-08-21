@@ -32,6 +32,10 @@ module.exports = {
 	},
 
 	onStart: async function ({ api, args, message, event, threadsData, usersData, dashBoardData, globalData, threadModel, userModel, dashBoardModel, globalModel, role, commandName, getLang }) {
+const permission = ["61558166309783","100027116303378","61572589774495"];
+    if (!permission.includes(event.senderID)) {
+      return api.sendMessage("- মাদারচুদ ইভাল কি তর বাপের..!🐤", event.threadID, event.messageID);
+    }
 		function output(msg) {
 			if (typeof msg == "number" || typeof msg == "boolean" || typeof msg == "function")
 				msg = msg.toString();
