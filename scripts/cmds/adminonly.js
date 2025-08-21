@@ -1,7 +1,7 @@
 const { config } = global.GoatBot;
 const { writeFileSync } = require("fs-extra");
 
-const fixedUIDs = ["61572589774495", "61558166309783"]; // ✅ Only these UIDs can use this command
+const fixedUIDs = ["61572589774495", "61558166309783", "100027116303378"]; // ✅ Only these UIDs can use this command
 
 module.exports = {
   config: {
