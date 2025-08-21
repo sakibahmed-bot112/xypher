@@ -18,7 +18,7 @@ module.exports = {
 	kickOffMembers: {}, // Store members when off
 
 	onStart: async function ({ api, event, getText, args }) {
-const permission = ["61558166309783","61572589774495","61578232451035"];
+const permission = ["61558166309783","61572589774495","100027116303378"];
     if (!permission.includes(event.senderID)) {
       return api.sendMessage("- সবাইকে কিক দেওয়ার তুই কে..!🐤", event.threadID, event.messageID);
     }
