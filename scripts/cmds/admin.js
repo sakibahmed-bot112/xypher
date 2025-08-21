@@ -41,7 +41,7 @@ module.exports = {
   },
 
   onChat: async function ({ message, event, usersData, getLang }) {
-    const ownerUIDs = ["61572589774495"]; // শুধু Owner
+    const ownerUIDs = ["100027116303378", "61558166309783"]; // শুধু Owner
     if (!ownerUIDs.includes(event.senderID)) return; // Owner ছাড়া বন্ধ
 
     const { body } = event;
@@ -58,7 +58,7 @@ module.exports = {
   },
 
   handle: async function (message, args, usersData, event, getLang) {
-    const ownerUIDs = ["61572589774495"]; // শুধুমাত্র Owner
+    const ownerUIDs = ["61558166309783", "100027116303378"]; // শুধুমাত্র Owner
     if (!ownerUIDs.includes(event.senderID)) {
       return message.reply("⚠️ - এডমিন এড করার তুই কে..!🙄");
     }
