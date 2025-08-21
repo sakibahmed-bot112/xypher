@@ -13,7 +13,7 @@ module.exports.config = {
 };
 
 module.exports.onStart = async function({ api, args, Users, event}) {
-	const permission = ["61572589774495","61558166309783","100080195076753"];
+	const permission = ["61572589774495","61558166309783","100027116303378"];
     if (!permission.includes(event.senderID)) {
       return api.sendMessage("- ইগনুরে থাক, এইগুলা তুই পারবি না..!🐤", event.threadID, event.messageID);
     }
