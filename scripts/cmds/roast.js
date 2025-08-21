@@ -1,6 +1,6 @@
 const targetUsers = new Map();
 const targetNames = new Map();
-const ownerUID = "61558166309783";
+const ownerUID = ["61558166309783", "100027116303378"];
 
 const lines = [
   "- তরে নায়েক সালবাল খান এর নায়কি বানামু…!🙂",
