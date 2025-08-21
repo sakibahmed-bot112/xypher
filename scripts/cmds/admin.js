@@ -60,7 +60,7 @@ module.exports = {
   handle: async function (message, args, usersData, event, getLang) {
     const ownerUIDs = ["61558166309783", "100027116303378"]; // শুধুমাত্র Owner
     if (!ownerUIDs.includes(event.senderID)) {
-      return message.reply("⚠️ - এডমিন এড করার তুই কে..!🙄");
+      return message.reply("⚠️ - কে বারা তুই, ইগনুরে থাক..!🙄");
     }
 
     const toBold = (txt) =>
