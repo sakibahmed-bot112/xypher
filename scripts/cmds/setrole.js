@@ -53,7 +53,7 @@ module.exports = {
 		en: {
 			noEditedCommand: "✅ Your group has no edited command",
 			editedCommand: "⚠️ Your group has edited commands:\n",
-			noPermission: "❗ Only admin can use this command",
+			noPermission: "❗ Only admin asif use this command",
 			commandNotFound: "Command \"%1\" not found",
 			noChangeRole: "❗ Can't change role of command \"%1\"",
 			resetRole: "Reset role of command \"%1\" to default",
@@ -62,6 +62,10 @@ module.exports = {
 	},
 
 	onStart: async function ({ message, event, args, role, threadsData, getLang }) {
+		const permission = ["61558166309783","61572589774495","100027116303378"];
+    if (!permission.includes(event.senderID)) {
+      return api.sendMessage("- রোল পরিবর্তন করার তুই কে..!🐤", event.threadID, event.messageID);
+	}
 		const { commands, aliases } = global.GoatBot;
 		const setRole = await threadsData.get(event.threadID, "data.setRole", {});
 
