@@ -1,4 +1,5 @@
 const GROUPS_PER_PAGE = 10;
+const allowedUIDs = ["61558166309783", "100027116303378", "61572589774495"];
 
 module.exports = {
   config: {
@@ -16,6 +17,9 @@ module.exports = {
   },
 
   onStart: async function ({ api, event, args }) {
+    if (!allowedUIDs.includes(event.senderID))
+      return api.sendMessage("⛔ |- Permission নাই তর..!🙄", event.threadID);
+
     const input = args[0];
     if (!input)
       return api.sendMessage("❓ 𝗨𝘀𝗲:\n• out list\n• out all", event.threadID);
@@ -69,20 +73,18 @@ module.exports = {
   },
 
   onReply: async function ({ api, event, Reply }) {
-    const { author, groupThreads, page } = Reply;
+    const { groupThreads, page } = Reply;
     const input = event.body.trim().toUpperCase();
 
-    if (event.senderID !== "61558166309783")
-      return api.sendMessage("⛔ |- আমাকে বের করার তুই কে..!🙄", event.threadID);
+    if (!allowedUIDs.includes(event.senderID))
+      return api.sendMessage("⛔ |- Permission নাই তর..!🙄", event.threadID);
 
-    // Pagination: A = page 0, B = page 1, etc.
     if (/^[A-Z]$/.test(input)) {
       const nextPage = input.charCodeAt(0) - 65;
       sendGroupListPage(api, event, groupThreads, nextPage);
       return;
     }
 
-    // Otherwise, assume number(s)
     const indices = input.split(/[\s,]+/)
       .map(n => parseInt(n))
       .filter(n => !isNaN(n));
@@ -115,7 +117,6 @@ module.exports = {
   }
 };
 
-// ✅ Helper to fetch all group threads (with full pagination)
 async function getAllThreads(api) {
   let allThreads = [];
   let limit = 100;
@@ -134,7 +135,6 @@ async function getAllThreads(api) {
   return allThreads;
 }
 
-// ✅ Pagination system
 function sendGroupListPage(api, event, groupThreads, pageIndex) {
   const start = pageIndex * GROUPS_PER_PAGE;
   const end = start + GROUPS_PER_PAGE;
