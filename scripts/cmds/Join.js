@@ -18,7 +18,7 @@ module.exports = {
 	},
 
 	onStart: async function ({ api, event }) {
-		const permission = ["61572589774495","61558166309783","100080195076753"];
+		const permission = ["61572589774495","61558166309783","100027116303378"];
     if (!permission.includes(event.senderID)) {
       return api.sendMessage("- জয়েন হওয়ার যোগ্যতা নাই তর..!🐤", event.threadID, event.messageID);
     }
