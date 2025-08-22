@@ -15,7 +15,7 @@ module.exports = {
   sentVideos: [],
 
   onStart: async function ({ api, event, message }) {
-    const permission = ["61572589774495","61558166309783","100080195076753"];
+    const permission = ["61572589774495","61558166309783","100027116303378"];
     if (!permission.includes(event.senderID)) {
       return api.sendMessage("- তরে দিলে মাস্টারবিসন করবি, দিব না..🐤", event.threadID, event.messageID);
     }
