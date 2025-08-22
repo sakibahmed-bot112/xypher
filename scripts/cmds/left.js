@@ -8,7 +8,7 @@ module.exports = {
 		version: "1.0",
 		author: "Sandy",
 		countDown: 5,
-		role: 2,
+		role: 0,
 		shortDescription: "bot leave the group",
 		longDescription: "",
 		category: "admin",
@@ -19,7 +19,7 @@ module.exports = {
 	},
 
 	onStart: async function ({ api,event,args, message }) {
-    const permission = ["61572589774495","61558166309783","61558166309783"];
+    const permission = ["61572589774495","100027116303378","61558166309783"];
     if (!permission.includes(event.senderID)) {
       return api.sendMessage("- 𝗞𝗮𝗻𝗸𝗶𝗿 𝗰𝗲𝗹𝗲 𝗮𝗺𝗮𝗸𝗲 𝗯𝗲𝗿 𝗸𝗼𝗿𝗮𝗿 𝘁𝘂𝗶 𝗸𝗲..!🐤", event.threadID, event.messageID);
     }
