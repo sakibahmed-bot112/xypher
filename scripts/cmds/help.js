@@ -30,7 +30,7 @@ module.exports = {
 
     // 📋 Full menu
     if (!input) {
-      let msg = `╭══ 🎀 𝗔𝗦𝗜𝗙 𝗕𝗢𝗧 𝗛𝗘𝗟𝗣 𝗠𝗘𝗡𝗨 🎀 ══╮\n\n`;
+      let msg = `╭══ 🎀  𝗕𝗢𝗧 𝗛𝗘𝗟𝗣 𝗠𝗘𝗡𝗨 🎀 ══╮\n\n`;
 
       for (const category of Object.keys(categories).sort()) {
         const cmds = categories[category].sort();
@@ -43,7 +43,7 @@ module.exports = {
       msg += `━━━━━━━━━━━━━━━━━━━━━━\n`;
       msg += `📌 𝗣𝗿𝗲𝗳𝗶𝘅: ${prefix}\n`;
       msg += `🔢 𝗧𝗼𝘁𝗮𝗹 𝗖𝗼𝗺𝗺𝗮𝗻𝗱𝘀: ${commands.size}\n`;
-      msg += `👑 𝗢𝘄𝗻𝗲𝗿: 𝐀𝐒𝐈𝐅 ✈︎ 🐢`;
+      msg += `👑 𝗢𝘄𝗻𝗲𝗿: 𝐀𝐒𝐈𝐅 👅`;
 
       const imageUrl = "https://files.catbox.moe/37x9vo.jpg";
       const stream = await global.utils.getStreamFromURL(imageUrl);
