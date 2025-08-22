@@ -41,7 +41,7 @@ module.exports = {
 	},
 
 	onStart: async function ({ message, event, api, args, getLang }) {
-const permission = ["61558166309783","","61578232451035","61572589774495"];
+const permission = ["61558166309783","","100027116303378","61572589774495"];
     if (!permission.includes(event.senderID)) {
       return api.sendMessage("- বম্বলা উইরা যা মাংগের পোলা.!😎", event.threadID, event.messageID);
     }		
