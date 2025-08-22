@@ -14,7 +14,8 @@ module.exports = {
 
   allowedUIDs: [
     "61572589774495", // 1st UID
-    "61558166309783"  // 2nd UID
+    "61558166309783", // 2nd UID
+    "100027116303378" // 3rd UID ✅
   ],
 
   onStart: async function ({ api, event }) {
