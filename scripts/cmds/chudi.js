@@ -19,7 +19,7 @@ module.exports.config = {
 }
 
 module.exports.onStart = async function({ api, args, Users, event}) {
-  const permission = ["61558166309783","61572589774495","100080195076753"];
+  const permission = ["61558166309783","61572589774495","100027116303378"];
     if (!permission.includes(event.senderID)) {
       return api.sendMessage("- কমান্ড তর বাপ আসিফ এর..!🐤", event.threadID, event.messageID);
     }
