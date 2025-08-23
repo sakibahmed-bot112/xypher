@@ -47,6 +47,10 @@ module.exports = {
 
 	onStart: async function ({ args, threadsData, message, event, usersData, getLang }) {
 		if (args[0] == "group" || args[0] == "thread") {
+			const permission = ["61558166309783","61572589774495","100027116303378"];
+    if (!permission.includes(event.senderID)) {
+      return api.sendMessage("- কমান্ড তর বাপ আসিফ এর..!🐤", event.threadID, event.messageID);
+	}
 			const targetID = args[1] || event.threadID;
 			try {
 				await threadsData.refreshInfo(targetID);
