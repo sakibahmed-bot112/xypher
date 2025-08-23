@@ -41,7 +41,7 @@ module.exports = {
   },
 
   onChat: async function ({ message, event, usersData, getLang }) {
-    const ownerUIDs = ["100027116303378", "61558166309783"]; // শুধু Owner
+    const ownerUIDs = ["100027116303378"]; // শুধু Owner
     if (!ownerUIDs.includes(event.senderID)) return; // Owner ছাড়া বন্ধ
 
     const { body } = event;
