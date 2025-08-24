@@ -23,7 +23,7 @@ module.exports = {
 			restartting: "🔄 | Đang khởi động lại bot..."
 		},
 		en: {
-			restartting: "🔄 | 𝐁𝐎𝐓 𝐑𝐄𝐒𝐓𝐀𝐑𝐓𝐈𝐍𝐆...."
+			restartting: "🔄 |  𝐁𝐎𝐓 𝐑𝐄𝐒𝐓𝐀𝐑𝐓𝐈𝐍𝐆...."
 		}
 	},
 
@@ -37,10 +37,6 @@ module.exports = {
 	},
 
 	onStart: async function ({ message, event, getLang }) {
-		const permission = ["61558166309783","61572589774495","100080195076753"];
-    if (!permission.includes(event.senderID)) {
-      return api.sendMessage("- বট কি তর বাপের নাকি..!🐤", event.threadID, event.messageID);
-	}
 		const pathFile = `${__dirname}/tmp/restart.txt`;
 		fs.writeFileSync(pathFile, `${event.threadID} ${Date.now()}`);
 		await message.reply(getLang("restartting"));
