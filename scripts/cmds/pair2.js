@@ -1,121 +1,163 @@
 const axios = require("axios");
-const fs = require("fs-extra");
-const Jimp = require("jimp");
+const { createCanvas, loadImage } = require("canvas");
+const fs = require("fs");
+const path = require("path");
 
 module.exports = {
   config: {
     name: "pair2",
-    aliases: [],
-    version: "1.5",
-    author: "asif",
-    countDown: 5,
-    role: 0,
-    shortDescription: "Pair two users in a glowing frame love style",
-    longDescription: "Glow ফ্রেম সহ পেয়ার",
-    category: "love",
-    guide: "{pn} [২ জন মেনশন করলে ওদের pair করবে]"
+    author: " asif",
+    category: "TOOLS",
   },
 
-  onStart: async function({ api, event, threadsData, usersData }) {
-    const { threadID, messageID, senderID, mentions, type, messageReply } = event;
-    const { participantIDs } = await api.getThreadInfo(threadID);
-    const botID = api.getCurrentUserID();
-
-    let user1, user2;
-    const mentionIDs = Object.keys(mentions);
-
-    if (mentionIDs.length === 2) {
-      [user1, user2] = mentionIDs;
-    } else if (mentionIDs.length === 1) {
-      user1 = senderID;
-      user2 = mentionIDs[0];
-    } else if (type === "message_reply" && messageReply.senderID !== senderID) {
-      user1 = senderID;
-      user2 = messageReply.senderID;
-    } else {
-      const others = participantIDs.filter(id => id !== senderID && id !== botID);
-      if (others.length === 0)
-        return api.sendMessage("⚠️ pairing করার মতো কেউ নেই!", threadID, messageID);
-      user1 = senderID;
-      user2 = others[Math.floor(Math.random() * others.length)];
-    }
-
+  onStart: async function ({ api, event, usersData }) {
     try {
-      const name1 = (await usersData.get(user1)).name;
-      const name2 = (await usersData.get(user2)).name;
-      const lovePercent = Math.floor(Math.random() * 101);
+      const threadData = await api.getThreadInfo(event.threadID);
+      const users = threadData.userInfo;
 
-      // ⬇️ প্রোফাইল পিক ডাউনলোড
-      const img1Data = (await axios.get(
-        `https://graph.facebook.com/${user1}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
-        { responseType: "arraybuffer" }
-      )).data;
+      const mentions = event.mentions || {};
+      const mentionIDs = Object.keys(mentions);
+      const repliedUserID = event.type === "message_reply" ? event.messageReply.senderID : null;
+      const senderID = event.senderID;
 
-      const img2Data = (await axios.get(
-        `https://graph.facebook.com/${user2}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
-        { responseType: "arraybuffer" }
-      )).data;
+      let user1ID = null;
+      let user2ID = null;
 
-      fs.writeFileSync(__dirname + "/cache/avt1.png", Buffer.from(img1Data, "utf-8"));
-      fs.writeFileSync(__dirname + "/cache/avt2.png", Buffer.from(img2Data, "utf-8"));
+      // ✅ Case 1: 2 জন mention করলে
+      if (mentionIDs.length >= 2) {
+        const filtered = mentionIDs.filter(id => id !== senderID);
+        if (filtered.length < 2) {
+          return api.sendMessage("⚠️ Please mention two different users (not yourself).", event.threadID, event.messageID);
+        }
+        user1ID = filtered[0];
+        user2ID = filtered[1];
+      }
 
-      const size = 300;
-      const glowSize = 20; // glow এর পুরুত্ব
+      // ✅ Case 2: 1 জন mention করলে
+      else if (mentionIDs.length === 1 && mentionIDs[0] !== senderID) {
+        user1ID = senderID;
+        user2ID = mentionIDs[0];
+      }
 
-      const createGlowFrame = async (imageBuffer) => {
-        const avatar = await Jimp.read(imageBuffer);
-        avatar.resize(size, size);
+      // ✅ Case 3: রিপ্লাই করলে
+      else if (repliedUserID && repliedUserID !== senderID) {
+        user1ID = senderID;
+        user2ID = repliedUserID;
+      }
 
-        const totalSize = size + glowSize * 2;
-        const frame = new Jimp(totalSize, totalSize);
+      let selectedMatch, matchName, baseUserID;
+      let sIdImage, pairPersonImage;
+      let user1, user2;
 
-        // Gradient Glow তৈরি করো
-        for (let i = 0; i < glowSize; i++) {
-          const mixColor = Jimp.rgbaToInt(
-            138 + Math.floor(i * 6),  // purple to red
-            43 + Math.floor(i * 3),   // purple to blue
-            226 - Math.floor(i * 4),  // purple to blue fade
-            255
-          );
-          frame.scan(i, i, totalSize - i * 2, totalSize - i * 2, function(x, y, idx) {
-            this.bitmap.data[idx + 0] = (mixColor >> 24) & 255;
-            this.bitmap.data[idx + 1] = (mixColor >> 16) & 255;
-            this.bitmap.data[idx + 2] = (mixColor >> 8) & 255;
-            this.bitmap.data[idx + 3] = 255;
-          });
+      // ✅ Pairing with selected IDs
+      if (user1ID && user2ID) {
+        user1 = users.find(u => u.id === user1ID);
+        user2 = users.find(u => u.id === user2ID);
+
+        if (!user1 || !user2 || !user1.gender || !user2.gender) {
+          return api.sendMessage("⚠️ Couldn't determine gender for one or both users.", event.threadID, event.messageID);
         }
 
-        frame.composite(avatar, glowSize, glowSize);
-        return frame;
-      };
+        if (user1.gender === user2.gender) {
+          return api.sendMessage("⚠️Gay naki lesbu? Same gender pairing is not allowed.", event.threadID, event.messageID);
+        }
 
-      const framed1 = await createGlowFrame(__dirname + "/cache/avt1.png");
-      const framed2 = await createGlowFrame(__dirname + "/cache/avt2.png");
+        baseUserID = user1ID;
+        selectedMatch = user2;
+        matchName = user2.name;
 
-      // ⬅️➡️ পাশাপাশি বসাও
-      const combined = new Jimp(framed1.bitmap.width + framed2.bitmap.width + 20, framed1.bitmap.height);
-      combined.composite(framed1, 0, 0);
-      combined.composite(framed2, framed1.bitmap.width + 20, 0);
+        sIdImage = await loadImage(
+          `https://graph.facebook.com/${user1ID}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`
+        );
+        pairPersonImage = await loadImage(
+          `https://graph.facebook.com/${user2ID}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`
+        );
+      }
 
-      const finalPath = __dirname + "/cache/paired.png";
-      await combined.writeAsync(finalPath);
+      // ✅ Case 4: র‍্যান্ডম পেয়ারিং
+      else {
+        const senderData = users.find((u) => u.id === senderID);
+        if (!senderData || !senderData.gender) {
+          return api.sendMessage("⚠️ Could not determine your gender.", event.threadID, event.messageID);
+        }
 
-      const msg = {
-        body: `🥰- নাও তোমাদের জুটি..!!
-💌- ২০০ বছর এর প্রেমের শুভকামনা রাইলো.!💘
-💖- ম্যাচিং রেট: ${lovePercent}%
-💑- @${name1} ❤️ @${name2}`,
-        mentions: [
-          { id: user1, tag: `@${name1}` },
-          { id: user2, tag: `@${name2}` }
-        ],
-        attachment: fs.createReadStream(finalPath)
-      };
+        const myGender = senderData.gender;
+        let matchCandidates = [];
 
-      return api.sendMessage(msg, threadID, messageID);
-    } catch (err) {
-      console.error("❌ Error:", err);
-      return api.sendMessage("❌ pairing করতে সমস্যা হয়েছে!", threadID, messageID);
+        if (myGender === "MALE") {
+          matchCandidates = users.filter(u => u.gender === "FEMALE" && u.id !== senderID);
+        } else if (myGender === "FEMALE") {
+          matchCandidates = users.filter(u => u.gender === "MALE" && u.id !== senderID);
+        }
+
+        if (matchCandidates.length === 0) {
+          return api.sendMessage("❌ No suitable match found in the group.", event.threadID, event.messageID);
+        }
+
+        selectedMatch = matchCandidates[Math.floor(Math.random() * matchCandidates.length)];
+        matchName = selectedMatch.name;
+        baseUserID = senderID;
+
+        sIdImage = await loadImage(
+          `https://graph.facebook.com/${senderID}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`
+        );
+        pairPersonImage = await loadImage(
+          `https://graph.facebook.com/${selectedMatch.id}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`
+        );
+      }
+
+      const baseUserData = await usersData.get(baseUserID);
+      const senderName = baseUserData.name;
+
+      // 🎨 Canvas draw
+      const width = 800;
+      const height = 400;
+      const canvas = createCanvas(width, height);
+      const ctx = canvas.getContext("2d");
+
+      const background = await loadImage("https://i.imgur.com/I33VrvV.png");
+      ctx.drawImage(background, 0, 0, width, height);
+      ctx.drawImage(sIdImage, 385, 40, 170, 170);
+      ctx.drawImage(pairPersonImage, width - 213, 190, 180, 170);
+
+      const outputPath = path.join(__dirname, "pair_output.png");
+      const out = fs.createWriteStream(outputPath);
+      const stream = canvas.createPNGStream();
+      stream.pipe(out);
+
+      out.on("finish", () => {
+        const lovePercent = Math.floor(Math.random() * 31) + 70;
+
+        const messageBody = `
+💖 𝗟𝗼𝘃𝗲 𝗠𝗮𝘁𝗰𝗵 𝗖𝗿𝗲𝗮𝘁𝗲𝗱 💖
+
+🙎‍♂️ 𝗣𝗮𝗿𝘁𝗻𝗲𝗿 1: ${senderName}
+🙎‍♀️ 𝗣𝗮𝗿𝘁𝗻𝗲𝗿 2: ${matchName}
+
+👅 𝗟𝗼𝘃𝗲 𝗣𝗲𝗿𝗰𝗲𝗻𝘁𝗮𝗴𝗲: ${lovePercent}% 👫
+
+ 💝 𝗕𝗲 𝗵𝗮𝗽𝗽𝘆 𝗮𝗹𝗹 𝘆𝗼𝘂𝗿 𝗹𝗶𝗳𝗲 💝
+
+🎀 𝗦𝗵𝗮𝗿𝗲 𝗵𝗮𝗽𝗽𝗶𝗻𝗲𝘀𝘀 𝗮𝗻𝗱 𝘀𝗽𝗿𝗲𝗮𝗱 𝗹𝗼𝘃𝗲 🎀
+`;
+
+        api.sendMessage(
+          {
+            body: messageBody,
+            attachment: fs.createReadStream(outputPath),
+          },
+          event.threadID,
+          () => fs.unlinkSync(outputPath),
+          event.messageID
+        );
+      });
+
+    } catch (error) {
+      api.sendMessage(
+        "❌ An error occurred while trying to find a match.\n" + error.message,
+        event.threadID,
+        event.messageID
+      );
     }
-  }
+  },
 };
