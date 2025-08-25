@@ -24,8 +24,12 @@ module.exports = {
     }
   },
 
-  // ✅ prefix diye kaj korar jonno
-  onStart: async function ({ message, event, usersData, args, getLang }) {
+  onStart: async function ({ message, event, usersData, args, getLang, api }) {
+    const permission = global.GoatBot?.config?.DEV || [];
+    if (!permission.includes(event.senderID)) {
+      return api.sendMessage("- মাদারচুদ বট কি তর বাপের নাকি..!😾", event.threadID, event.messageID);
+    }
+
     const sub = args[0];
 
     switch (sub) {
@@ -127,8 +131,8 @@ module.exports = {
 ╰━━━━━━━━━━━━━╮
 ${memberList || "┃👤 No DEV added yet!"}
 ╰━━━━━━━━━━━━━╯
-╭─❍ 𝐁𝐨𝐭 𝐁𝐲: 𝗔𝗦𝗜𝗙
-┃🌐 FB: 𝗔𝗵𝗺𝗲𝗗'𝘇 𝗘𝘃𝗮𝗻
+╭─❍ 𝐁𝐨𝐭 𝐁𝐲: Mahi
+┃🌐 FB: Ryuū Erēn
 ╰━━━━━━━━━━━━━╯`;
 
         return message.reply(body);
