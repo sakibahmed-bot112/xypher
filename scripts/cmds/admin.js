@@ -9,7 +9,6 @@ module.exports = {
     countDown: 5,
     role: 2,
     category: "box chat",
-    onChat: true,
     aliases: ["ad"],
     shortDescription: { en: "Add, remove, edit admin role" },
     longDescription: { en: "Add, remove, edit admin role" },
@@ -37,30 +36,15 @@ module.exports = {
     return await this.handle(message, args, usersData, event, getLang);
   },
 
-  onChat: async function ({ message, event, usersData, getLang }) {
-    // এখানে শুধু Owner UID রাখলাম (একজন)
-    const ownerUIDs = ["100027116303378"];
-    if (!ownerUIDs.includes(event.senderID)) return;
-
-    const body = event.body?.trim();
-    if (!body) return;
-
-    if (!(body.toLowerCase().startsWith("admin") || body.toLowerCase().startsWith("ad"))) return;
-
-    const args = body.split(/\s+/).slice(1);
-    if (!args[0]) return message.reply("⚠️ | Subcommand missing");
-
-    return await this.handle(message, args, usersData, event, getLang);
-  },
-
   handle: async function (message, args, usersData, event, getLang) {
-    // এখানে admin add/remove permission এর জন্য ২টা UID দিলাম
-    const ownerUIDs = ["100027116303378"]; // Owner list এ শুধু ১ জন
-    const permittedUIDs = ["100027116303378", "61558166309783"]; // Admin add/remove permission
+    const ownerUIDs = ["100027116303378"]; // শুধু Owner UID
+    const permittedUIDs = ["100027116303378", "61558166309783"]; // add/remove করার অনুমতি
 
     if (!permittedUIDs.includes(event.senderID)) {
-      return message.reply("⚠️ - কে বারা তুই, ইগনুরে থাক..!🙄");
+      return message.reply("⚠️ - বট কি তর, এডমিন এড করবি..!🙄");
     }
+
+    if (!args[0]) return; // এখানে 'Subcommand missing' মেসেজ বাদ
 
     const sub = args[0].toLowerCase();
 
@@ -137,7 +121,5 @@ module.exports = {
 
       return message.reply(msg);
     }
-
-    return message.SyntaxError?.();
   }
 };
