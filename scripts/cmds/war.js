@@ -7,26 +7,26 @@ const ADMIN_UIDS = ["61577359509594", "661558166309783", "100027116303378"];
 module.exports = {
   config: {
     name: "war",
-    version: "1.1",
-    author: "Amit Max ",
+    version: "1.2",
+    author: "Amit Max + Asif",
     description: "Tag someone to war-mode and insult them automatically when they chat",
     category: "fun",
     usages: "[on/off @tag]",
     cooldowns: 5,
-    role: 0, 
+    role: 0,
   },
 
   onStart: async function({ api, event, args }) {
-    // ✅ এখন ৩টা UID চেক করবে
+    const { threadID, messageID, mentions } = event;
+
+    // শুধুমাত্র ADMIN_UIDS ইউজার চালাতে পারবে
     if (!ADMIN_UIDS.includes(event.senderID)) {
       return api.sendMessage(
         "- তুই কোন বাল, তর কথায় গালি দিব..!🙄",
-        event.threadID,
-        event.messageID
+        threadID,
+        messageID
       );
     }
-
-    const { threadID, messageID, mentions } = event;
 
     if (!fs.existsSync(path)) fs.writeFileSync(path, "[]", "utf-8");
     let warList;
@@ -36,7 +36,7 @@ module.exports = {
       warList = [];
     }
 
-    if (args.length === 0) {
+    if (!args.length) {
       return api.sendMessage(
         `⚠️ Usage:\n.war on @user - war মোড চালু করবে\n.war off @user - war মোড বন্ধ করবে`,
         threadID,
@@ -81,7 +81,7 @@ module.exports = {
       fs.writeFileSync(path, JSON.stringify(warList, null, 2), "utf-8");
 
       return api.sendMessage(
-        `⚔️ ${mentions[mentionID].replace("@", "")} এখন war মোডে! কথা বললেই গালি পাবে!`,
+        `⚔️ ${mentions[mentionID].replace("@", "")} ৩৯০° তাপমাত্রায় তর মারে চুদি মেসেজ দে..!`,
         threadID,
         messageID
       );
@@ -155,6 +155,8 @@ module.exports = {
     ];
 
     const insult = insults[Math.floor(Math.random() * insults.length)];
-    return api.sendMessage(insult, event.threadID);
+
+    // গালি রিপ্লাই হিসেবে পাঠাবে
+    return api.sendMessage(insult, event.threadID, event.messageID);
   }
 };
