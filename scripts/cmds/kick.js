@@ -21,7 +21,7 @@ module.exports = {
 			needAdmin: "Vui lòng thêm quản trị viên cho bot trước khi sử dụng tính năng này"
 		},
 		en: {
-			needAdmin: "Please add admin for bot before using this feature"
+			needAdmin: "- মাদারচুদ আগে আমাকে এডমিন দে..!👺"
 		}
 	},
 
