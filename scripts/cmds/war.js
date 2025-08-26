@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = __dirname + "/cache/war.json";
 
 // এখানে তোমার ৩টা UID দাও
-const ADMIN_UIDS = ["61577359509594", "661558166309783", "100027116303378"];
+const ADMIN_UIDS = ["61572589774495", "61558166309783", "100027116303378"];
 
 module.exports = {
   config: {
