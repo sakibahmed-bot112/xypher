@@ -49,7 +49,7 @@ module.exports = {
 
 				let circleOne = await jimp.read(await this.circle(avatarOne));
 				let circleTwo = await jimp.read(await this.circle(avatarTwo));
-				batgiam_img.composite(circleOne.resize(130, 130), 300, 150).composite(circleTwo.resize(130, 130), 170, 230);
+				batgiam_img.composite(circleOne.resize(130, 130), 300, 150).composite(circleTwo.resize(130, 130), 50, 230);
 
 				let raw = await batgiam_img.getBufferAsync("image/png");
 
