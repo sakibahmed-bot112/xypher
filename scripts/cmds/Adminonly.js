@@ -7,7 +7,7 @@ module.exports = {
   config: {
     name: "wl",
     version: "1.0",
-    author: "mahi",
+    author: "cini na",
     role: 2,
     category: "owner",
     shortDescription: { en: "Manage whiteList" },
