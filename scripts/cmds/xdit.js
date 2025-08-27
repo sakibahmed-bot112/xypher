@@ -1,28 +1,69 @@
+const apiUrl = "https://r24qks-3001.csb.app";
+
 module.exports = {
-config: {
-	name: "xdit",
-	author: "Tawsif~",
-	category: "image",
-	countDown: 5,
-	role: 0,
-	guide: { en: "edit <prompt> | reply to image"
-}
-},
-onStart: async function({ message, event, args }) {
-const prompt = args.join(" ");
-if (!event.messageReply || !event?.messageReply?.attachments[0]?.url) { return message.reply('reply to an image');
-} else if (!prompt) { return message.reply("❌ | provide a prompt");
-}
-const replyImageUrl = event.messageReply.attachments[0].url;	message.reaction("⏳", event.messageID);
-try {
-const t = new Date().getTime();
-		let url = `https://tawsifz-gemini.onrender.com/edit?texts=${encodeURIComponent(prompt)}&url=${encodeURIComponent(replyImageUrl)}`;
+  config: {
+    name: "xdit",
+    aliases: ["e", "aiedit"],
+    version: "1.6.9",
+    author: "Nazrul",
+    role: 0,
+    description: "Edit image by URL or reply",
+    category: "ai",
+    usePrefix: true,
+    isPremium: false,
+    countDown: 7,
+    guide: { en: "{pn} [url] [prompt] or reply to image & prompt" }
+  },
 
-await message.reply({ attachment: await global.utils.getStreamFromURL(url, 'edit.png'), body: `✅ | Here's your image ✨\n🕔 | Time taken: ${(new Date().getTime() -t)/1e3} seconds`,
-});
+  onStart: async ({ message, event, args }) => {
+    const axios = require("axios");
+    let imgUrl, prompt = "";
 
-	message.reaction("✅", event.messageID);
-} catch (error) { message.send("❌ | " + error.message);
-		}
-	}
-}
+    if (event.messageReply?.attachments?.[0]?.type === "photo") {
+      imgUrl = event.messageReply.attachments[0].url;
+      prompt = args.join(" ");
+    }
+
+    if (!imgUrl && args[0]) {
+      imgUrl = args[0];
+      prompt = args.slice(1).join(" ");
+    }
+
+    if (!imgUrl) {
+      return message.reply("• Reply to an image or provide image URL!\n• Add Prompt (for edit)");
+    }
+
+    message.reaction('⏳', event.messageID);
+    const wm = await message.reply("⏳ Editing your image... Please wait!");
+
+    try {
+      const res = await axios.get(
+        `${apiUrl}/nazrul/edit?imgUrl=${encodeURIComponent(imgUrl)}&prompt=${encodeURIComponent(prompt)}&key=Nazrul4x`,
+        { responseType: "stream" }
+      );
+
+      const contentType = res.headers['content-type'];
+      message.reaction('✅', event.messageID);
+      await message.unsend(wm.messageID);
+
+      if (contentType.includes("image")) {
+        return message.reply({
+          body: `✅ Here's your Edited image!`,
+          attachment: res.data
+        });
+      } else {
+        let text = "";
+        res.data.setEncoding("utf8");
+        for await (const chunk of res.data) text += chunk;
+
+        const json = JSON.parse(text);
+        return message.reply(json?.result?.text || "• No text found in result.");
+      }
+
+    } catch (error) {
+      message.reaction('❌', event.messageID);
+      await message.unsend(wm.messageID);
+      return message.reply(`❌ Error: ${error.message}`);
+    }
+  }
+};
