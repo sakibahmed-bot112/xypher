@@ -1,7 +1,7 @@
 module.exports = {
 		config: {
 				name: "married",
-				aliases: ["married"],
+				aliases: ["mrd"],
 				version: "1.0",
 				author: "kivv",
 				countDown: 5,
