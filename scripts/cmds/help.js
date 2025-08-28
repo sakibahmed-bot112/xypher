@@ -1,115 +1,157 @@
+const fs = require("fs-extra");
+const axios = require("axios");
+const path = require("path");
 const { getPrefix } = global.utils;
 const { commands, aliases } = global.GoatBot;
 
 module.exports = {
   config: {
     name: "help",
-    version: "3.0",
-    author: "- 𝐀𝐒𝐈𝐅 ✈︎ 🎀",
+    version: "1.18",
+    author: "dimu na deke lab nai author",
     countDown: 5,
     role: 0,
-    shortDescription: { en: "Show all commands beautifully" },
-    longDescription: { en: "Display categorized commands with a designed layout" },
+    shortDescription: {
+      en: "View command usage and list all commands directly",
+    },
+    longDescription: {
+      en: "View command usage and list all commands directly",
+    },
     category: "info",
-    guide: { en: "{pn} [category or command name]" }
+    guide: {
+      en: "{pn} / help [category] or help commandName",
+    },
+    priority: 1,
   },
 
   onStart: async function ({ message, args, event, role }) {
-    const prefix = getPrefix(event.threadID);
-    const input = args.join(" ").trim().toLowerCase();
+    const { threadID } = event;
+    const prefix = getPrefix(threadID);
     const categories = {};
 
-    for (const [name, cmd] of commands) {
-      if (!cmd?.config || typeof cmd.onStart !== "function") continue;
-      if (cmd.config.role > 1 && role < cmd.config.role) continue;
+    for (const [name, value] of commands) {
+      if (!value?.config || typeof value.onStart !== "function") continue;
+      if (value.config.role > 1 && role < value.config.role) continue;
 
-      const category = (cmd.config.category || "Uncategorized").toUpperCase();
+      const category = value.config.category?.toLowerCase() || "uncategorized";
       if (!categories[category]) categories[category] = [];
       categories[category].push(name);
     }
 
-    // 📋 Full menu
-    if (!input) {
-      let msg = `╭══ 🎀  𝗕𝗢𝗧 𝗛𝗘𝗟𝗣 𝗠𝗘𝗡𝗨 🎀 ══╮\n\n`;
+    const helpListImages = ["https://files.catbox.moe/npi3pv.jpg"];
+    const helpListImage = helpListImages[Math.floor(Math.random() * helpListImages.length)];
+    const rawInput = args.join(" ").trim();
+
+    // 🧾 Full Help Menu
+    if (!rawInput) {
+      let msg = "╔═══════════════╗\n";
+      msg += "     🎏 𝙴𝙻𝙾𝙽 𝙷𝙴𝙻𝙿 𝙼𝙴𝙽𝚄\n";
+      msg += "╚═══════════════╝\n";
 
       for (const category of Object.keys(categories).sort()) {
-        const cmds = categories[category].sort();
-        msg += `🔰 𝗖𝗔𝗧𝗘𝗚𝗢𝗥𝗬: ${category}\n`;
-        msg += `━━━━━━━━━━━━━━━━━━━━\n`;
-        const formattedCmds = cmds.map(cmd => `⤷ ${prefix}${cmd}`).join("   ");
-        msg += `${formattedCmds}\n\n`;
+        msg += `┍━━━[ ${category.toUpperCase()} ]☃\n`;
+        const names = categories[category].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+        for (const cmd of names) {
+          msg += `┋🔰 ${cmd}\n`;
+        }
+        msg += "┕━━━━━━━━━━━━◊\n";
       }
 
-      msg += `━━━━━━━━━━━━━━━━━━━━━━\n`;
-      msg += `📌 𝗣𝗿𝗲𝗳𝗶𝘅: ${prefix}\n`;
-      msg += `🔢 𝗧𝗼𝘁𝗮𝗹 𝗖𝗼𝗺𝗺𝗮𝗻𝗱𝘀: ${commands.size}\n`;
-      msg += `👑 𝗢𝘄𝗻𝗲𝗿: 𝐀𝐒𝐈𝐅 👅`;
+      msg += "┍━━━[𝙸𝙽𝙵𝚁𝙾𝙼]━━━◊\n";
+      msg += `┋➥𝚃𝙾𝚃𝙰𝙻𝙲𝙼𝙳: [${commands.size}]\n`;
+      msg += `┋➥𝙿𝚁𝙴𝙵𝙸𝚇: ${prefix}\n`;
+      msg += `┋𝙾𝚆𝙽𝙴𝚁: 𝚂𝙰𝙼𝙸𝚄𝙽  𝙴𝚅𝙰𝙽  𝙰𝚂𝙸𝙵\n`;
+      msg += "┕━━━━━━━━━━━◊";
 
-      const imageUrl = "https://files.catbox.moe/37x9vo.jpg";
-      const stream = await global.utils.getStreamFromURL(imageUrl);
-
-      const sent = await message.reply({ body: msg, attachment: stream });
-      setTimeout(() => message.unsend(sent.messageID), 60 * 1000);
+      const sentMsg = await message.reply({
+        body: msg,
+        attachment: await global.utils.getStreamFromURL(helpListImage),
+      });
+      setTimeout(() => message.unsend(sentMsg.messageID), 120000);
       return;
     }
 
-    // 🔍 Category-wise
-    if (input.startsWith("[") && input.endsWith("]")) {
-      const categoryName = input.slice(1, -1).toUpperCase();
-      const cmds = categories[categoryName];
-      if (!cmds)
-        return message.reply(`❌ Category "${categoryName}" not found.\nAvailable: ${Object.keys(categories).map(c => `[${c}]`).join(", ")}`);
+    // 📁 Specific Category
+    if (rawInput.startsWith("[") && rawInput.endsWith("]")) {
+      const categoryName = rawInput.slice(1, -1).toLowerCase();
 
-      let msg = `🔰 𝗖𝗔𝗧𝗘𝗚𝗢𝗥𝗬: ${categoryName}\n`;
-      msg += `━━━━━━━━━━━━━━━━━━━━\n`;
-      msg += cmds.sort().map(c => `⤷ ${prefix}${c}`).join("   ");
+      if (!categories[categoryName]) {
+        return message.reply(`❌ Category "${categoryName}" খুঁজে পাওয়া যায়নি।\n📁 Available: ${Object.keys(categories).map(c => `[${c}]`).join(", ")}`);
+      }
 
-      const sent = await message.reply(msg);
-      setTimeout(() => message.unsend(sent.messageID), 60 * 1000);
+      let msg = `╔═══════════════╗\n`;
+      msg += `     𝐇𝐄𝐋𝐏 - ${categoryName.toUpperCase()}\n`;
+      msg += `╚═══════════════╝\n`;
+      msg += `┍━━━[ ${categoryName.toUpperCase()} ]\n`;
+
+      const names = categories[categoryName].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+      for (const cmd of names) {
+        msg += `┋🔰 ${cmd}\n`;
+      }
+
+      msg += "┕━━━━━━━━━━━━◊";
+
+      const sentMsg = await message.reply({
+        body: msg,
+        attachment: await global.utils.getStreamFromURL(helpListImage),
+      });
+      setTimeout(() => message.unsend(sentMsg.messageID), 120000);
       return;
     }
 
-    // 🧾 Command-specific
-    const commandName = input;
-    const cmd = commands.get(commandName) || commands.get(aliases.get(commandName));
-    if (!cmd || !cmd.config)
-      return message.reply(`❌ Command "${commandName}" not found.\nTry: ${prefix}help`);
+    // 🔍 Command Detail
+    const commandName = rawInput.toLowerCase();
+    const command = commands.get(commandName) || commands.get(aliases.get(commandName));
 
-    const config = cmd.config;
-    const usage = (config.guide?.en || "No usage").replace(/{pn}/g, `${prefix}${config.name}`);
-    const desc = config.longDescription?.en || config.shortDescription?.en || "No description";
-    const roleText = roleTextToString(config.role);
+    if (!command || !command?.config) {
+      return message.reply(`❌ Command "${commandName}" খুঁজে পাওয়া যায়নি।\nTry: /help or /help [category]`);
+    }
 
-    const msg = `
-╭── 🎯 𝗖𝗢𝗠𝗠𝗔𝗡𝗗: ${stylizeSmallCaps(config.name)} ──╮
-│ 📝 𝗗𝗲𝘀𝗰: ${desc}
-│ 📘 𝗨𝘀𝗮𝗴𝗲: ${usage}
-│ 🔁 𝗥𝗼𝗹𝗲: ${roleText}
-│ 👨‍💻 𝗔𝘂𝘁𝗵𝗼𝗿: ${config.author || "𝐀𝐬𝐢𝐟"}
-╰─────────────────────`;
+    const configCommand = command.config;
+    const roleText = roleTextToString(configCommand.role);
+    const author = configCommand.author || "Unknown";
+    const longDescription = configCommand.longDescription?.en || "No description";
+    const guideBody = configCommand.guide?.en || "No guide available.";
+    const usage = guideBody.replace(/{pn}/g, `${prefix}${configCommand.name}`);
 
-    const sent = await message.reply(msg);
-    setTimeout(() => message.unsend(sent.messageID), 40 * 1000);
+    const response = `
+╭───⊙
+│ 🔶 ${stylizeSmallCaps(configCommand.name)}
+├── INFO
+│ 📝 Description: ${longDescription}
+│ 👑 Author: ${author}
+│ ⚙ Guide: ${usage}
+├── USAGE
+│ 🔯 Version: ${configCommand.version || "1.0"}
+│ ♻ Role: ${roleText}
+╰────────────⊙`;
+
+    const sentMsg = await message.reply(response);
+    setTimeout(() => message.unsend(sentMsg.messageID), 120000);
   }
 };
 
-// 🎨 Small caps font converter
+// 🔡 Small Caps Converter
 function stylizeSmallCaps(text) {
   const map = {
     a: 'ᴀ', b: 'ʙ', c: 'ᴄ', d: 'ᴅ', e: 'ᴇ', f: 'ꜰ', g: 'ɢ', h: 'ʜ', i: 'ɪ',
     j: 'ᴊ', k: 'ᴋ', l: 'ʟ', m: 'ᴍ', n: 'ɴ', o: 'ᴏ', p: 'ᴘ', q: 'ǫ', r: 'ʀ',
-    s: 'ꜱ', t: 'ᴛ', u: 'ᴜ', v: 'ᴠ', w: 'ᴡ', x: 'x', y: 'ʏ', z: 'ᴢ'
+    s: 'ꜱ', t: 'ᴛ', u: 'ᴜ', v: 'ᴠ', w: 'ᴡ', x: 'x', y: 'ʏ', z: 'ᴢ',
+    A: 'ᴀ', B: 'ʙ', C: 'ᴄ', D: 'ᴅ', E: 'ᴇ', F: 'ꜰ', G: 'ɢ', H: 'ʜ', I: 'ɪ',
+    J: 'ᴊ', K: 'ᴋ', L: 'ʟ', M: 'ᴍ', N: 'ɴ', O: 'ᴏ', P: 'ᴘ', Q: 'ǫ', R: 'ʀ',
+    S: 'ꜱ', T: 'ᴛ', U: 'ᴜ', V: 'ᴠ', W: 'ᴡ', X: 'x', Y: 'ʏ', Z: 'ᴢ',
+    0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9'
   };
-  return text.split('').map(c => map[c.toLowerCase()] || c).join('');
+  return text.split('').map(c => map[c] || c).join('');
 }
 
-// 🎓 Role level description
+// 🧾 Role Name Resolver
 function roleTextToString(role) {
   switch (role) {
-    case 0: return "Everyone";
-    case 1: return "Group Admin";
-    case 2: return "Bot Admin";
-    case 3: return "Super Admin";
-    default: return `Level ${role}`;
+    case 0: return "0 (Everyone)";
+    case 1: return "1 (Group Admin)";
+    case 2: return "2 (Bot Admin)";
+    case 3: return "3 (Super Admin)";
+    default: return `${role} (Unknown)`;
   }
-          }
+        }
