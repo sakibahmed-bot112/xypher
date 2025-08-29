@@ -7,7 +7,7 @@ module.exports = {
   config: {
     name: "font",
     version: "1.1",
-    author: "Evan Asif",
+    author: "Ew'r Saim",
     role: 0,
     aliases: ["style"],
     shortDescription: { en: "Convert text into different font styles" },
