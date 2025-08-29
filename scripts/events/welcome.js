@@ -1,25 +1,24 @@
+const { createCanvas, loadImage, registerFont } = require("canvas");
+const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
-const { createCanvas, loadImage } = require("canvas"); 
-const axios = require("axios");
-const moment = require("moment-timezone");
 
 module.exports = {
   config: {
     name: "welcome",
     version: "2.0",
-    author: "𝐄𝐰'𝐫 𝐒𝐚𝐢𝐦 edit by asif",
+    author: "Ew'r Saim",
     category: "events"
   },
 
-  onStart: async function ({ event, api }) {
+  onStart: async function ({ api, event }) {
     if (event.logMessageType !== "log:subscribe") return;
 
-    const { threadID, logMessageData } = event;
+    const { threadID, logMessageData, senderID } = event;
     const newUsers = logMessageData.addedParticipants;
     const botID = api.getCurrentUserID();
 
-    if (newUsers.some(user => user.userFbId === botID)) return;
+    if (newUsers.some(u => u.userFbId === botID)) return;
 
     const threadInfo = await api.getThreadInfo(threadID);
     const groupName = threadInfo.threadName;
@@ -29,101 +28,115 @@ module.exports = {
       const userId = user.userFbId;
       const fullName = user.fullName;
 
-      const tmpDir = path.join(__dirname, "cache");
-      fs.ensureDirSync(tmpDir);
+      const FONT_NAME = "ModernNoirBold";
+      const FONT_URL = "https://github.com/Saim12678/Saim/blob/693ceed2f392ac4fe6f98f77b22344f6fc5ac9f8/fonts/tt-modernoir-trial.bold.ttf?raw=true";
 
-      const avatarURL = `https://graph.facebook.com/${userId}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
-      const avatarPath = path.join(tmpDir, `avt_${userId}.png`);
-      const outputPath = path.join(tmpDir, `welcome_card_${userId}.png`);
+      const TEXT_STYLES = {
+        name: { fontSize: 64, y: 345 },
+        group: { fontSize: 42, y: 400 },
+        member: { fontSize: 38, y: 447 }
+      };
+
+      const avatarSize = 240;
+
+      const backgrounds = [
+        "https://files.catbox.moe/cj68oa.jpg",
+        "https://files.catbox.moe/0n8mmb.jpg",
+        "https://files.catbox.moe/hvynlb.jpg",
+        "https://files.catbox.moe/leyeuq.jpg",
+        "https://files.catbox.moe/7ufcfb.jpg",
+        "https://files.catbox.moe/y78bmv.jpg"
+      ];
+      const bgUrl = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+
+      const tmp = path.join(__dirname, "..", "cache");
+      await fs.ensureDir(tmp);
+
+      const avatarPath = path.join(tmp, `avt_${userId}.png`);
+      const bgPath = path.join(tmp, "bg.jpg");
+      const outputPath = path.join(tmp, `welcome_${userId}.png`);
+      const fontPath = path.join(tmp, `${FONT_NAME}.ttf`);
 
       try {
-        // Download avatar
-        const res = await axios.get(avatarURL, { responseType: "arraybuffer" });
-        fs.writeFileSync(avatarPath, Buffer.from(res.data, "utf-8"));
+        if (!fs.existsSync(fontPath)) {
+          const fontRes = await axios.get(FONT_URL, { responseType: "arraybuffer" });
+          fs.writeFileSync(fontPath, fontRes.data);
+        }
+        registerFont(fontPath, { family: FONT_NAME });
+
+        const avatarRes = await axios.get(
+          `https://graph.facebook.com/${userId}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
+          { responseType: "arraybuffer" }
+        );
+        fs.writeFileSync(avatarPath, avatarRes.data);
+
+        const bgRes = await axios.get(bgUrl, { responseType: "arraybuffer" });
+        fs.writeFileSync(bgPath, bgRes.data);
 
         const avatar = await loadImage(avatarPath);
+        const bg = await loadImage(bgPath);
+
         const W = 983, H = 480;
         const canvas = createCanvas(W, H);
         const ctx = canvas.getContext("2d");
 
-        // Load background
-        const bgUrl = "https://files.catbox.moe/zfrfb1.jpg";
-        const bgRes = await axios.get(bgUrl, { responseType: "arraybuffer" });
-        const bgImage = await loadImage(Buffer.from(bgRes.data, "binary"));
-        ctx.drawImage(bgImage, 0, 0, W, H);
+        ctx.drawImage(bg, 0, 0, W, H);
 
-        // Draw white glowing ring around avatar
-        const avatarSize = 190;
         const ax = (W - avatarSize) / 2;
-        const ay = 40;
-        const r = avatarSize / 2;
+        const ay = 30;
 
         ctx.beginPath();
-        ctx.arc(ax + r, ay + r, r + 6, 0, Math.PI * 2);
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 9.3;
-        ctx.shadowColor = "#ffffff";
-        ctx.shadowBlur = 400;
-        ctx.stroke();
+        ctx.arc(W / 2, ay + avatarSize / 2, avatarSize / 2 + 6, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
 
-        // Draw avatar image
         ctx.save();
         ctx.beginPath();
-        ctx.arc(ax + r, ay + r, r, 0, Math.PI * 2);
+        ctx.arc(W / 2, ay + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
         ctx.clip();
         ctx.drawImage(avatar, ax, ay, avatarSize, avatarSize);
         ctx.restore();
 
-        // Draw text
-        ctx.textAlign = "center";
+        function draw3DText(ctx, text, x, y, fontSize) {
+          ctx.font = `${fontSize}px ${FONT_NAME}`;
+          ctx.textAlign = "center";
+          const offsets = [[4, 4], [3.5, 3.5], [3, 3], [2.5, 2.5], [2, 2], [1.5, 1.5], [1, 1]];
+          ctx.fillStyle = "#000000";
+          for (let [dx, dy] of offsets) ctx.fillText(text, x + dx, y + dy);
+          ctx.fillStyle = "#ffffff";
+          ctx.fillText(text, x, y);
+        }
 
-        ctx.font = "bold 42px Arial";
-        ctx.fillStyle = "#00e6ff";
-        ctx.shadowColor = "#00ffff";
-        ctx.shadowBlur = 100;
-        ctx.fillText(`𝐇𝐞𝐥𝐥𝐨 ${fullName}`, W / 2, 280);
+        draw3DText(ctx, `{ ${fullName} }`, W / 2, TEXT_STYLES.name.y, TEXT_STYLES.name.fontSize);
+        draw3DText(ctx, groupName, W / 2, TEXT_STYLES.group.y, TEXT_STYLES.group.fontSize);
+        draw3DText(ctx, `You're the ${memberCount} member on this group`, W / 2, TEXT_STYLES.member.y, TEXT_STYLES.member.fontSize);
 
-        ctx.font = "bold 34px Arial";
-        ctx.fillStyle = "#ffffff";
-        ctx.shadowColor = "#ffffff";
-        ctx.shadowBlur = 100;
-        ctx.fillText(`𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐭𝐨 ${groupName}`, W / 2, 330);
+        const buffer = canvas.toBuffer("image/png");
+        fs.writeFileSync(outputPath, buffer);
 
-        ctx.font = "30px Arial";
-        ctx.fillStyle = "#ffffff";
-        ctx.shadowColor = "#eeeeee";
-        ctx.shadowBlur = 70;
-        ctx.fillText(`𝐘𝐨𝐮'𝐫𝐞 𝐭𝐡𝐞 ${memberCount} 𝐦𝐞𝐦𝐛𝐞𝐫 𝐨𝐧 𝐭𝐡𝐢𝐬 𝐠𝐫𝐨𝐮𝐩.`, W / 2, 375);
-
-        ctx.font = "28px monospace";
-        ctx.fillStyle = "#eeeeee";
-        ctx.shadowBlur = 8;
-        ctx.fillText("━━━━━━━━━━━━━━━━", W / 2, 415);
-
-        const timeStr = moment().tz("Asia/Dhaka").format("[📅] hh:mm:ss A - DD/MM/YYYY - dddd");
-        ctx.font = "25px Arial";
-        ctx.fillStyle = "#dddddd";
-        ctx.shadowColor = "#999999";
-        ctx.shadowBlur = 400;
-        ctx.fillText(timeStr, W / 2, 455);
-
-        // Save final image
-        fs.writeFileSync(outputPath, canvas.toBuffer("image/png"));
-
-        // Send welcome message
-        const messageText = `- 𝐇𝐞𝐥𝐥𝐨 ${fullName}\n- 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐭𝐨 ${groupName}\n- 𝐘𝐨𝐮'𝐫𝐞 𝐭𝐡𝐞 ${memberCount} 𝐦𝐞𝐦𝐛𝐞𝐫 𝐨𝐧 𝐭𝐡𝐢𝐬 𝐠𝐫𝐨𝐮𝐩, 𝐩𝐥𝐞𝐚𝐬𝐞 𝐞𝐧𝐣𝐨𝐲..! 🎀\n━━━━━━━━━━━━━━━━\n${timeStr}`;
+        const timeStr = new Date().toLocaleString("en-BD", {
+          timeZone: "Asia/Dhaka",
+          hour: "2-digit", minute: "2-digit", second: "2-digit",
+          weekday: "long", year: "numeric", month: "2-digit", day: "2-digit",
+          hour12: true,
+        });
 
         await api.sendMessage({
-          body: messageText,
+          body:
+            `‎𝐇𝐞𝐥𝐥𝐨 ${fullName}\n` +
+            `𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐭𝐨 ${groupName}\n` +
+            `𝐘𝐨𝐮'𝐫𝐞 𝐭𝐡𝐞 ${memberCount} 𝐦𝐞𝐦𝐛𝐞𝐫 𝐨𝐧 𝐭𝐡𝐢𝐬 𝐠𝐫𝐨𝐮𝐩, 𝐩𝐥𝐞𝐚𝐬𝐞 𝐞𝐧𝐣𝐨𝐲 🎉\n` +
+            `━━━━━━━━━━━━━━━━\n` +
+            `📅 ${timeStr}`,
           attachment: fs.createReadStream(outputPath),
           mentions: [{ tag: fullName, id: userId }]
         }, threadID);
 
         fs.unlinkSync(avatarPath);
-        setTimeout(() => fs.unlink(outputPath).catch(() => { }), 60000);
-
+        fs.unlinkSync(bgPath);
+        fs.unlinkSync(outputPath);
       } catch (err) {
-        console.error("⚠️ Error generating welcome image:", err);
+        console.error("❌ Error generating welcome image:", err);
       }
     }
   }
