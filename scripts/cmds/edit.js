@@ -2,7 +2,7 @@ const apiUrl = "https://r24qks-3001.csb.app";
 
 module.exports = {
   config: {
-    name: "xdit",
+    name: "edit",
     aliases: ["e", "aiedit"],
     version: "1.6.9",
     author: "Nazrul",
