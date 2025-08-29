@@ -4,7 +4,7 @@ const path = require("path");
 
 module.exports = {
 config: {
-name: "edit",
+name: "xdit",
 version: "1.0",
 author: "Noxo",
 countDown: 5,
