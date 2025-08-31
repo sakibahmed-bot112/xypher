@@ -1,66 +1,121 @@
-const fs = require("fs-extra");
 const request = require("request");
 
 module.exports = {
 config: {
-    name: "groupinfo",
-    aliases: ['boxinfo'],
+		name: "group",
     version: "1.0",
-    author: "Aryan Chauhan 🍒",
-    countDown: 0,
-    role: 0,
-    shortDescription: "See Box info",
-    longDescription: "",
-    category: "box chat",
-    guide: {
-      en: "{p} [groupinfo|boxinfo]",
+		author: "Samir Thakuri",
+		countDown: 5,
+		role: 1,
+		shortDescription: "See Box info and changes",
+		longDescription: "",
+		category: "OWNER",
+		guide: {
+      en: "[name/emoji/admin/image/info]",
     }
-  },
+	},
 
  onStart: async function ({ api, event, args }) {
-  let threadInfo = await api.getThreadInfo(event.threadID);
-  var memLength = threadInfo.participantIDs.length;
-  let threadMem = threadInfo.participantIDs.length;
-  var nameMen = [];
-    var gendernam = [];
-    var gendernu = [];
-    var nope = [];
-     for (let z in threadInfo.userInfo) {
-      var gioitinhone = threadInfo.userInfo[z].gender;
-      var nName = threadInfo.userInfo[z].name;
-        if(gioitinhone == "MALE"){gendernam.push(z+gioitinhone)}
-        else if(gioitinhone == "FEMALE"){gendernu.push(gioitinhone)}
-            else{nope.push(nName)}
-    };
-  var nam = gendernam.length;
-    var nu = gendernu.length;
-   var listad = '';
-   var qtv2 = threadInfo.adminIDs;
-  let qtv = threadInfo.adminIDs.length;
-  let sl = threadInfo.messageCount;
-  let u = threadInfo.nicknames;
-  let icon = threadInfo.emoji;
-  let threadName = threadInfo.threadName;
-  let id = threadInfo.threadID;
-   for (let i = 0; i < qtv2.length; i++) {
+  const fs = require("fs");
+	 if (args.length == 0) return api.sendMessage(`You can use:\n/group emoji [icon]\n\n/group name [the box name needs to be changed]\n\n/group image [rep any image needs to be set as group chat image]\n\n/group admin [tag] => it will give qtv to the person tagged\n\n/group info => All group information !
+`, event.threadID, event.messageID);
+
+
+	if (args[0] == "name") {
+var content = args.join(" ");
+var c = content.slice(4, 99) || event.messageReply.body;
+api.setTitle(`${c } `, event.threadID);
+ }
+	if (args[0] == "emoji") {
+const name = args[1] || event.messageReply.body;
+api.changeThreadEmoji(name, event.threadID)
+
+ }
+if(args[0] == "me"){
+	 if (args[1] == "admin") {
+		const threadInfo = await api.getThreadInfo(event.threadID)
+		const find = threadInfo.adminIDs.find(el => el.id == api.getCurrentUserID());
+		if(!find) api.sendMessage("BOT needs to throw admin to use ?", event.threadID, event.messageID)
+	  else if(!global.GoatBot.config.adminBot.includes(event.senderID)) api.sendMessage("Cunt powers ?", event.threadID, event.messageID)
+     else api.changeAdminStatus(event.threadID, event.senderID, true);
+     }
+} 
+if (args[0] == "admin") {
+
+if (args.join().indexOf('@') !== -1){
+	 namee = Object.keys(event.mentions)}
+else namee = args[1]
+if (event.messageReply) {namee = event.messageReply.senderID}
+
+const threadInfo = await api.getThreadInfo(event.threadID)
+const findd = threadInfo.adminIDs.find(el => el.id == namee);
+const find = threadInfo.adminIDs.find(el => el.id == api.getCurrentUserID());
+const finddd = threadInfo.adminIDs.find(el => el.id == event.senderID);
+
+if (!finddd) return api.sendMessage("You are not a box admin ?", event.threadID, event.messageID);		
+if(!find) {api.sendMessage("Don't throw the admin using the cock?", event.threadID, event.messageID)}
+if (!findd) {api.changeAdminStatus(event.threadID, namee, true);}
+else api.changeAdminStatus(event.threadID, namee, false)
+ }
+
+if (args[0] == "image") {
+
+if (event.type !== "message_reply") return api.sendMessage("❌ You must reply to a certain audio, video, or photo", event.threadID, event.messageID);
+	if (!event.messageReply.attachments || event.messageReply.attachments.length == 0) return api.sendMessage("❌ You must reply to a certain audio, video, or photo", event.threadID, event.messageID);
+	if (event.messageReply.attachments.length > 1) return api.sendMessage(`Please reply only one audio, video, photo!`, event.threadID, event.messageID);
+	 var callback = () => api.changeGroupImage(fs.createReadStream(__dirname + "/cache/1.png"), event.threadID, () => fs.unlinkSync(__dirname + "/cache/1.png"));	
+      return request(encodeURI(event.messageReply.attachments[0].url)).pipe(fs.createWriteStream(__dirname+'/cache/1.png')).on('close',() => callback());
+      };
+if (args[0] == "info") {
+		var threadInfo = await api.getThreadInfo(event.threadID);
+		let threadMem = threadInfo.participantIDs.length;
+	var gendernam = [];
+	var gendernu = [];
+	var nope = [];
+	for (let z in threadInfo.userInfo) {
+		var gioitinhone = threadInfo.userInfo[z].gender;
+
+		var nName = threadInfo.userInfo[z].name;
+
+		if (gioitinhone == 'MALE') {
+			gendernam.push(z + gioitinhone);
+		} else if (gioitinhone == 'FEMALE') {
+			gendernu.push(gioitinhone);
+		} else {
+			nope.push(nName);
+		}
+	}
+	var nam = gendernam.length;
+	var nu = gendernu.length;
+	let qtv = threadInfo.adminIDs.length;
+	let sl = threadInfo.messageCount;
+	let icon = threadInfo.emoji;
+	let threadName = threadInfo.threadName;
+	let id = threadInfo.threadID;
+	var listad = '';
+	var qtv2 = threadInfo.adminIDs;
+	for (let i = 0; i < qtv2.length; i++) {
 const infu = (await api.getUserInfo(qtv2[i].id));
 const name = infu[qtv2[i].id].name;
-    listad += '•' + name + '\n';
-  }
-  let sex = threadInfo.approvalMode;
-      var pd = sex == false ? 'Turned off' : sex == true ? 'Turned on' : 'Kh';
-      var callback = () =>
-        api.sendMessage(
-          {
-            body: `🍒「 𝐆𝐂 𝐍𝐚𝐦𝐞 」:${threadName}\n🎀「 𝐆𝐫𝐨𝐮𝐩 𝐈𝐃 」: ${id}\n🌷「 𝐀𝐩𝐩𝐫𝐨𝐯𝐚𝐥 」: ${pd}\n💛「 𝐄𝐦𝐨𝐣𝐢 」: ${icon}\n🔥「 𝐈𝐧𝐟𝐨𝐫𝐦𝐚𝐭𝐢𝐨𝐧 」: 𝐈𝐧𝐜𝐥𝐮𝐝𝐢𝐧𝐠 ${threadMem} 𝐌𝐞𝐦𝐛𝐞𝐫𝐬\n💌「 𝐍𝐮𝐦𝐛𝐞𝐫 𝐎𝐟 𝐌𝐚𝐥𝐞𝐬 」: ${nam}\n😘「 𝐍𝐮𝐦𝐛𝐞𝐫 𝐎𝐟 𝐅𝐞𝐦𝐚𝐥𝐞𝐬 」:  ${nu}\n💝「 𝐓𝐨𝐭𝐚𝐥 𝐀𝐝𝐦𝐢𝐧𝐢𝐬𝐭𝐫𝐚𝐭𝐨𝐫𝐬 」: ${qtv} \n「 𝐈𝐧𝐜𝐥𝐮𝐝𝐞 」:\n${listad}\n🐰「 𝐓𝐨𝐭𝐚𝐥 𝐍𝐮𝐦𝐛𝐞𝐫 𝐎𝐟 𝐌𝐞𝐬𝐬𝐚𝐠𝐞𝐬 」: ${sl} msgs.\n\n𝐌𝐚𝐝𝐞 𝐖𝐢𝐭𝐡 ❤️ 𝐁𝐲: 【 𝗦𝗮𝗶'𝗸𝗼 𝗧. 𝗘𝘃𝗮𝗻 】`,
-            attachment: fs.createReadStream(__dirname + '/cache/1.png')
-          },
-          event.threadID,
-          () => fs.unlinkSync(__dirname + '/cache/1.png'),
-          event.messageID
-        );
-      return request(encodeURI(`${threadInfo.imageSrc}`))
-        .pipe(fs.createWriteStream(__dirname + '/cache/1.png'))
-        .on('close', () => callback());
+		listad += '•' + name + '\n';
+	}
+	let sex = threadInfo.approvalMode;
+	var pd = sex == false ? 'Turn off' : sex == true ? 'Turn on' : 'Kh';
+	var pdd = sex == false ? '❎' : sex == true ? '✅' : '⭕';
+	 var callback = () =>
+				api.sendMessage(
+					{
+						body: `GC Name: ${threadName}\nGC ID: ${id}\n${pdd} Approve: ${pd}\nEmoji: ${icon}\n-Information:\nTotal ${threadMem} members\nMale ${nam} members \nFemale: ${nu} members\n\nWith ${qtv} Administrators include:\n${listad}\nTotal number of messages: ${sl} msgs.`,
+						attachment: fs.createReadStream(__dirname + '/cache/1.png')
+					},
+					event.threadID,
+					() => fs.unlinkSync(__dirname + '/cache/1.png'),
+					event.messageID
+				);
+			return request(encodeURI(`${threadInfo.imageSrc}`))
+				.pipe(fs.createWriteStream(__dirname + '/cache/1.png'))
+				.on('close', () => callback());
+
+	}
  }
 };
