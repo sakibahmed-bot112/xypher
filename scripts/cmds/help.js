@@ -8,7 +8,7 @@ module.exports = {
   config: {
     name: "help",
     version: "1.18",
-    author: "dimu na deke lab nai author",
+    author: "gay amit",
     countDown: 5,
     role: 0,
     shortDescription: {
@@ -113,37 +113,27 @@ module.exports = {
     const longDescription = configCommand.longDescription?.en || "No description";
     const guideBody = configCommand.guide?.en || "No guide available.";
     const usage = guideBody.replace(/{pn}/g, `${prefix}${configCommand.name}`);
+    const category = configCommand.category || "Uncategorized";
+    const aliasesList = configCommand.aliases?.length ? configCommand.aliases.join(", ") : "None";
+    const cooldown = configCommand.countDown ? `${configCommand.countDown}s` : "None";
 
-    const response = `
-╭───⊙
-│ 🔶 ${stylizeSmallCaps(configCommand.name)}
-├── INFO
-│ 📝 Description: ${longDescription}
-│ 👑 Author: ${author}
-│ ⚙ Guide: ${usage}
-├── USAGE
-│ 🔯 Version: ${configCommand.version || "1.0"}
-│ ♻ Role: ${roleText}
-╰────────────⊙`;
+    const response = 
+`╔══ [𝗖𝗢𝗠𝗠𝗔𝗡𝗗 𝗜𝗡𝗙𝗢] ══╗
+┋🧩 Name       : ${configCommand.name}
+┋🗂️ Category   : ${category}
+┋📜 Description: ${longDescription}
+┋🔁 Aliases    : ${aliasesList}
+┋⚙️ Version    : ${configCommand.version || "1.0"}
+┋🔐 Permission : ${roleText}
+┋⏱️ Cooldown   : ${cooldown}
+┋👑 Author     : ${author}
+┋📖 Usage      : ${usage}
+╚════════════════════╝`;
 
     const sentMsg = await message.reply(response);
     setTimeout(() => message.unsend(sentMsg.messageID), 120000);
   }
 };
-
-// 🔡 Small Caps Converter
-function stylizeSmallCaps(text) {
-  const map = {
-    a: 'ᴀ', b: 'ʙ', c: 'ᴄ', d: 'ᴅ', e: 'ᴇ', f: 'ꜰ', g: 'ɢ', h: 'ʜ', i: 'ɪ',
-    j: 'ᴊ', k: 'ᴋ', l: 'ʟ', m: 'ᴍ', n: 'ɴ', o: 'ᴏ', p: 'ᴘ', q: 'ǫ', r: 'ʀ',
-    s: 'ꜱ', t: 'ᴛ', u: 'ᴜ', v: 'ᴠ', w: 'ᴡ', x: 'x', y: 'ʏ', z: 'ᴢ',
-    A: 'ᴀ', B: 'ʙ', C: 'ᴄ', D: 'ᴅ', E: 'ᴇ', F: 'ꜰ', G: 'ɢ', H: 'ʜ', I: 'ɪ',
-    J: 'ᴊ', K: 'ᴋ', L: 'ʟ', M: 'ᴍ', N: 'ɴ', O: 'ᴏ', P: 'ᴘ', Q: 'ǫ', R: 'ʀ',
-    S: 'ꜱ', T: 'ᴛ', U: 'ᴜ', V: 'ᴠ', W: 'ᴡ', X: 'x', Y: 'ʏ', Z: 'ᴢ',
-    0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9'
-  };
-  return text.split('').map(c => map[c] || c).join('');
-}
 
 // 🧾 Role Name Resolver
 function roleTextToString(role) {
@@ -154,4 +144,4 @@ function roleTextToString(role) {
     case 3: return "3 (Super Admin)";
     default: return `${role} (Unknown)`;
   }
-        }
+}
