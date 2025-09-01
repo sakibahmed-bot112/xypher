@@ -3,7 +3,7 @@ const fs = require("fs");
 module.exports = {
   config: {
     name: "bowde",
-    version: "1.1b2",
+    version: "1.2",
     author: "TAREK ",
     countDown: 5,
     role: 0,
