@@ -156,7 +156,7 @@ module.exports = {
 
                 const satelliteHexes = [
                     { angle: 60,  label: "RAM USAGE",   value: `${osMemoryUsagePercentageNum.toFixed(1)}%`, font: 'bold 30px Arial' },
-                    { angle: 120, label: "SYS UPTIME",  value: systemUptime, font: 'bold 22px Arial' },
+                    { angle: 120, label: "SYS UPTIME",  value: systemUptime, font: 'bold 18px Arial' },
                     { angle: 180, label: "CPU USAGE",   value: `${currentCpuUsageNum.toFixed(1)}%`, font: 'bold 30px Arial' },
                     { angle: 240, label: "BOT UPTIME",  value: botUptime, font: 'bold 22px Arial' },
                     { angle: 300, label: "CPU CORES",   value: cpuCores, font: 'bold 30px Arial' },
@@ -180,7 +180,7 @@ module.exports = {
 
                 cornerHexes.forEach(hex => {
                     drawHexagon(ctx, hex.x, hex.y, cornerHexSize, hexFill, glowColor, 2);
-                    fillHexStat(ctx, hex.x, hex.y, hex.label, hex.value, secondaryColor, textColor, '12px Arial', 'bold 18px Arial');
+                    fillHexStat(ctx, hex.x, hex.y, hex.label, hex.value, secondaryColor, textColor, '12px Arial', 'bold 14px Arial');
                 });
 
                 drawHexagon(ctx, centerX, centerY, mainHexSize, hexFill, glowColor, 4);
