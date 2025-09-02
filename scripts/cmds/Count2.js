@@ -79,9 +79,24 @@ module.exports = {
     ctx.fillStyle = "#00FF00"; ctx.font = "bold 50px Sans"; ctx.textAlign = "center";
     ctx.fillText("ACTIVITY CARD", width / 2, 80);
 
+    // Avatar
     const avatar = await loadImage(`https://graph.facebook.com/${senderID}/picture?height=1000&width=1000&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`);
-    ctx.save(); ctx.beginPath(); ctx.arc(width / 2, 200, 100, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
-    ctx.drawImage(avatar, width / 2 - 100, 100, 200, 200); ctx.restore();
+    
+    // Circular crop
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(width / 2, 200, 100, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(avatar, width / 2 - 100, 100, 200, 200);
+    ctx.restore();
+
+    // White border around avatar
+    ctx.beginPath();
+    ctx.arc(width / 2, 200, 100, 0, Math.PI * 2);
+    ctx.lineWidth = 8; // border thickness
+    ctx.strokeStyle = "#ffffff"; // white border
+    ctx.stroke();
 
     ctx.fillStyle = "#fff"; ctx.font = "bold 42px Sans"; ctx.fillText(userName, width / 2, 350);
 
