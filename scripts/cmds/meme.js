@@ -1,47 +1,85 @@
 const axios = require("axios");
 
-const mahmud = async () => {
-  const base = await axios.get("https://raw.githubusercontent.com/mahmudx7/exe/main/baseApiUrl.json");
-  return base.data.mahmud;
-};
-
 module.exports = {
   config: {
     name: "meme",
     aliases: ["memes"],
-    version: "1.7",
-    author: "MahMUD",
-    countDown: 10,
+    version: "2.0",
+    author: "Ew'r Saim",
     role: 0,
+    countDown: 5,
     category: "fun",
-    guide: "{pn}"
+    shortDescription: "Send a random meme or add a new one",
+    longDescription: "Fetch random memes or add a meme via reply",
+    guide: "{pn} → Get 1 meme\n{pn} -5 → Get 5 memes\nReply media + {pn} add → Add meme"
   },
 
-  onStart: async function ({ message, event, api }) {
+  onStart: async function ({ api, event }) {
     try {
-      const apiUrl = await mahmud();
-      const res = await axios.get(`${apiUrl}/api/meme`);
-      const imageUrl = res.data?.imageUrl;
+      // Fetch base API URLs from GitHub
+      const baseApiUrlRes = await axios.get("https://raw.githubusercontent.com/Saim12678/Saim/main/baseApiUrl.json");
+      const baseApiUrls = baseApiUrlRes.data;
 
-      if (!imageUrl) {
-        return message.reply("Could not fetch meme. Please try again later.");
+      if (!baseApiUrls || !baseApiUrls.memes || !baseApiUrls.api) {
+        return api.sendMessage("❌ Invalid API URLs configuration.", event.threadID, event.messageID);
       }
 
-      const stream = await axios({
-        method: "GET",
-        url: imageUrl,
-        responseType: "stream",
-        headers: { 'User-Agent': 'Mozilla/5.0' }
-      });
+      const body = event.body?.trim();
+      const isAdd = body?.toLowerCase().includes("add");
+      const countMatch = body?.match(/-(\d+)/);
+      const count = countMatch ? parseInt(countMatch[1]) : 1;
 
-      await api.sendMessage({
-        body: "🐸 | 𝐇𝐞𝐫𝐞'𝐬 𝐲𝐨𝐮𝐫 𝐫𝐚𝐧𝐝𝐨𝐦 𝐦𝐞𝐦𝐞",
-        attachment: stream.data
-      }, event.threadID, event.messageID);
+      // ---- Add meme ----
+      if (isAdd) {
+        const attachment = event.messageReply?.attachments?.[0];
+        if (!attachment?.url) {
+          return api.sendMessage("❌ Reply to an image/video to add a meme.", event.threadID, event.messageID);
+        }
 
-      return;
-    } catch (error) {
-      return message.reply("An error occurred while fetching meme.");
+        const memeUrl = attachment.url;
+        if (!memeUrl.startsWith("http")) {
+          return api.sendMessage("❌ Invalid media URL.", event.threadID, event.messageID);
+        }
+
+        // Add meme to the database
+        const addRes = await axios.post(`${baseApiUrls.memes}/api/memes/add`, { url: memeUrl });
+        if (addRes.data?.success) {
+          return api.sendMessage(`✅ added: ${addRes.data.url}`, event.threadID, event.messageID);
+        }
+        return api.sendMessage("❌ Failed to add meme.", event.threadID, event.messageID);
+      }
+
+      // ---- Get memes ----
+      const res = await axios.get(`${baseApiUrls.memes}/api/memes?count=${count}`);
+      const memes = res.data?.memes;
+      if (!memes?.length) {
+        return api.sendMessage("❌ No memes found!", event.threadID, event.messageID);
+      }
+
+      // Send memes with better handling for attachments
+      const attachments = [];
+      for (let meme of memes) {
+        try {
+          // Fetch the image URL stream
+          const memeStream = await global.utils.getStreamFromURL(meme);
+          attachments.push(memeStream);
+        } catch (err) {
+          console.error("Error fetching meme image stream:", err);
+          continue; // Skip this meme if there's an issue loading it
+        }
+      }
+
+      // If we successfully got memes, send them
+      if (attachments.length > 0) {
+        const messageBody = count > 1 ? `😂 Here are ${count} memes!` : "😂 Here's your meme!";
+        await api.sendMessage({ body: messageBody, attachment: attachments }, event.threadID, event.messageID);
+      } else {
+        return api.sendMessage("❌ No memes available to send.", event.threadID, event.messageID);
+      }
+
+    } catch (err) {
+      console.error(err.response?.data || err.message);
+      api.sendMessage("❌ Meme command error!", event.threadID, event.messageID);
     }
   }
 };
