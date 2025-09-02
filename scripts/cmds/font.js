@@ -1,61 +1,87 @@
 const axios = require("axios");
 
-const baseUrl = "https://raw.githubusercontent.com/Saim12678/Saim69/1a8068d7d28396dbecff28f422cb8bc9bf62d85f/font";
-const listUrl = `${baseUrl}/list.json`;
-
 module.exports = {
   config: {
     name: "font",
-    version: "1.1",
+    aliases: ["font3", "style"],
+    version: "1.0",
     author: "Ew'r Saim",
+    countDown: 5,
     role: 0,
-    aliases: ["style"],
-    shortDescription: { en: "Convert text into different font styles" },
-    longDescription: { en: "Convert given text using one of the font styles" },
     category: "tools",
-    guide: { en: "{pn} list\n{pn} [font_number] [text]" }
+    shortDescription: "Convert text to fancy fonts",
+    longDescription: "Use /font <id> <text> or /font list",
+    guide: "{pn} list | {pn} 1 Evan Asif"
   },
 
-  onStart: async function({ args, message }) {
-    const prefix = global.GoatBot.config.prefix;
-    const sub = args[0]?.toLowerCase();
-
-    if (sub === "list") {
-      try {
-        const { data: previews } = await axios.get(listUrl);
-        if (!Array.isArray(previews)) throw new Error("Invalid list.json");
-
-        const header = "✨ 𝐀𝐯𝐚𝐢𝐥𝐚𝐛𝐥𝐞 𝐅𝐨𝐧𝐭 𝐒𝐭𝐲𝐥𝐞𝐬 ✨\n━━━━━━━━━━━━━━━━━━━━☆";
-        const footer = "━━━━━━━━━━━━━━━━━━━━━☆";
-        return message.reply(`${header}\n${previews.join("\n")}\n${footer}`);
-      } catch (err) {
-        console.error(err);
-        return message.reply("❌ | Failed to fetch font list. Try again later.");
-      }
-    }
-
-    const number = sub;
-    const text = args.slice(1).join(" ").trim();
-
-    if (!number || isNaN(number) || number === "list") {
-      return message.reply(
-        `❌ | Invalid usage!\nUse ${prefix}font list to see options\nor ${prefix}font [number] [text] to convert`
-      );
-    }
-
-    if (!text) {
-      return message.reply(`⚠️ | Please enter the text to convert.`);
-    }
-
+  onStart: async function ({ message, event, api, threadPrefix }) {
     try {
-      const { data: mapping } = await axios.get(`${baseUrl}/${number}.json`);
-      if (!mapping || typeof mapping !== "object") throw new Error("Bad font map");
+      const prefix = threadPrefix || "/font";
 
-      const converted = text.split("").map(ch => mapping[ch] || ch).join("");
-      return message.reply(converted);
+      const body = event.body || "";
+      const args = body.split(" ").slice(1);
+      if (args.length === 0) {
+        return api.sendMessage(`❌ | Invalid usage!\nUse ${prefix} list to see options\nor ${prefix} [number] [text] to convert`, event.threadID, event.messageID);
+      }
+      if (args[0].toLowerCase() === "list") {
+        const preview = `✨ 𝐀𝐯𝐚𝐢𝐥𝐚𝐛𝐥𝐞 𝐅𝐨𝐧𝐭 𝐒𝐭𝐲𝐥𝐞𝐬 ✨
+━━━━━━━━━━━━━━━━━━━━☆
+𝟭 ⟶ Ĕ̈v̆̈ă̈n̆̈ Ă̈s̆̈ĭ̈f̆̈
+𝟮 ⟶ E̷v̷a̷n̷ A̷s̷i̷f̷
+𝟯 ⟶ 𝗘𝘃𝗮𝗻 𝗔𝘀𝗶𝗳
+𝟰 ⟶ 𝘌𝘷𝘢𝘯 𝘈𝘴𝘪𝘧
+𝟱 ⟶ [E][v][a][n] [A][s][i][f]
+𝟲 ⟶ 𝕰𝖛𝖆𝖓 𝕬𝖘𝖎𝖋
+𝟳 ⟶ Ｅｖａｎ Ａｓｉｆ
+𝟴 ⟶ ᴱᵛᵃⁿ ᴬˢⁱᶠ
+𝟵 ⟶ uɐʌ ɟısɐ
+𝟭𝟬 ⟶ 🄴🅅🄰🄽 🄰🅂🄸🄵
+𝟭𝟭 ⟶ 🅴🆅🅰🅽 🅰🆂🅸🅵
+𝟭𝟮 ⟶ 𝐸𝓋𝒶𝓃 𝒜𝓈𝒾𝒻
+𝟭𝟯 ⟶ ⒺⓋⒶⓃ ⒶⓈⒾⒻ
+𝟭𝟰 ⟶ 🅔🅥🅐🅝 🅐🅢🅘🅕
+𝟭𝟱 ⟶ 𝙀𝙫𝙖𝙣 𝘼𝙨𝙞𝙛
+𝟭𝟲 ⟶ 𝐄𝐯𝐚𝐧 𝐀𝐬𝐢𝐟
+𝟭𝟟 ⟶ 𝔈𝔳𝔞𝔫 𝔄𝔰𝔦𝔣
+𝟭𝟠 ⟶ 𝓔𝓿𝓪𝓷 𝓐𝓼𝓲𝓯
+𝟭𝟵 ⟶ 𝙴𝚟𝚊𝚗 𝙰𝚜𝚒𝚏
+𝟮𝟬 ⟶ ᴇᴠᴀɴ ᴀsɪғ
+𝟮𝟭 ⟶ 𝐸𝑣𝑎𝑛 𝐴𝑠𝑖𝑓
+𝟮𝟮 ⟶ 𝑬𝒗𝒂𝒏 𝑨𝒔𝒊𝒇
+𝟮𝟯 ⟶ 𝔼𝕧𝕒𝕟 𝔸𝕤𝕚𝕗
+𝟮𝟰 ⟶ ꫀ᥎ᥲꪀ ᥲᥙⁱᖴ
+𝟮𝟱 ⟶ єναи αѕιf
+𝟮𝟲 ⟶ ᏋᏉᏗᏁ ᏗᏕᎥᎰ
+𝟮𝟟 ⟶ 乇ѵ卂几 卂丂丨千
+𝟮𝟠 ⟶ ᘿᘺᗩᑎ ᗩᔕᓰᖴ
+𝟮𝟡 ⟶ ɛʋǟռ ǟֆɨʄ
+𝟯𝟬 ⟶ 𐌄Ꮩ𐌀𐌍 𐌀𐌔𐌉𐍆
+𝟯𝟭 ⟶ ΣVΛИ ΛSIF
+━━━━━━━━━━━━━━━━━━━━━☆`;
+        return api.sendMessage(preview, event.threadID, event.messageID);
+      }
+
+      const id = args[0];
+      const text = args.slice(1).join(" ");
+
+      if (!text) return api.sendMessage(`❌ | Invalid usage!\nUse ${prefix} list to see options\nor ${prefix} [number] [text] to convert`, event.threadID, event.messageID);
+
+      const githubUrl = 'https://raw.githubusercontent.com/Saim12678/Saim/main/baseApiUrl.json';
+      const { data: baseUrls } = await axios.get(githubUrl);
+
+      const baseApiUrl = baseUrls.font;
+      const apiUrl = `${baseApiUrl}/api/font/${id}?text=${encodeURIComponent(text)}`;
+      const response = await axios.get(apiUrl);
+
+      if (response.data.output) {
+        return api.sendMessage(response.data.output, event.threadID, event.messageID);
+      } else {
+        return api.sendMessage(`❌ | Font ${id} not found!`, event.threadID, event.messageID);
+      }
+
     } catch (err) {
       console.error(err);
-      return message.reply(`❌ | Failed to load font #${number}. Maybe it's unavailable.`);
+      return api.sendMessage("❌ An error occurred! Please try again later.", event.threadID, event.messageID);
     }
   }
 };
