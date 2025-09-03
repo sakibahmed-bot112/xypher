@@ -1,114 +1,266 @@
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+const axios = require("axios");
+const { createCanvas, loadImage } = require("canvas");
+
+// ---- Math Bold Converter ----
+function toMathBold(input) {
+  const A = "A".codePointAt(0), a = "a".codePointAt(0), ZERO = "0".codePointAt(0);
+  const BOLD_A = 0x1D400, BOLD_a = 0x1D41A, BOLD_0 = 0x1D7CE;
+  let out = "";
+  for (const ch of input) {
+    const cp = ch.codePointAt(0);
+    if (cp >= 65 && cp <= 90) out += String.fromCodePoint(BOLD_A + (cp - A));
+    else if (cp >= 97 && cp <= 122) out += String.fromCodePoint(BOLD_a + (cp - a));
+    else if (cp >= 48 && cp <= 57) out += String.fromCodePoint(BOLD_0 + (cp - ZERO));
+    else out += ch;
+  }
+  return out;
+}
+
 module.exports = {
-	config: {
-		name: "balance",
-		aliases: ["bal"],
-		version: "2.0",
-		author: "Mahi",
-		countDown: 5,
-		role: 0,
-		description: {
-			vi: "Xem số tiền, thêm tiền hoặc chuyển tiền",
-			en: "Check your balance, add money or transfer money"
-		},
-		category: "economy",
-		guide: {
-			vi: `   {pn}: xem số tiền của bạn
-   {pn} <@tag>: xem số tiền của người được tag
-   {pn} add <số tiền>: thêm tiền vào tài khoản của bạn
-   {pn} add <số tiền> <@tag>: thêm tiền cho người được tag
-   {pn} transfer <số tiền> <@tag>: chuyển tiền cho người được tag`,
-			en: `   {pn}: view your money
-   {pn} <@tag>: view tagged user's balance
-   {pn} add <amount>: add money to your balance
-   {pn} add <amount> <@tag>: add money to tagged user
-   {pn} transfer <amount> <@tag>: transfer money to tagged user`
-		}
-	},
+  config: {
+    name: "bal",
+    aliases: ["bal", "b"],
+    version: "2.1",
+    author: "Muzan",
+    role: 0,
+    shortDescription: "Show user balance with styled glowing border",
+    category: "economy",
+    cooldown: 5
+  },
 
-	langs: {
-		en: {
-			money: "💰 𝗬𝗢𝗨𝗥 𝗪𝗔𝗟𝗟𝗘𝗧 💰\n━━━━━━━━━━━━━━\n👤 𝗨𝗦𝗘𝗥: %1\n💵 𝗕𝗔𝗟𝗔𝗡𝗖𝗘: %2$\n━━━━━━━━━━━━━━",
-			moneyOf: "👤 %1's Balance: 💵 %2$",
-			addedMoney: "✅ +%1$ added to your balance!\n💼 New Balance: %2$",
-			addedMoneyTo: "✅ You gave 💸 %1$ to %2\n📥 Your New Balance: %3$",
-			invalidAmount: "❌ Invalid amount. Please enter a valid number.",
-			notEnoughMoney: "❌ Insufficient funds in your wallet.",
-			limitExceeded: "⚠️ You can only add up to 200$ at a time.",
-			transferSuccess: "✅ Successfully sent 💸 %1$ to %2\n📉 Remaining Balance: %3$"
-		}
-	},
+  onStart: async function ({ event, message, usersData, args }) {
+    try {
+      if (args[0] && args[0].toLowerCase() === "top") {
+        return await showTop(message, usersData);
+      }
 
-	onStart: async function ({ message, usersData, event, args, getLang }) {
-		const adminID = "100005193854879";
-		const senderID = event.senderID;
+      const interestRate = 0.01;
+      const now = Date.now();
 
-		// ✅ Sender data and name loaded at the top
-		const senderData = await usersData.get(senderID);
-		const senderName = senderData.name || "User";
+      let userId = event.senderID;
+      if (args[0] && /^\d+$/.test(args[0])) userId = args[0];
+      else if (Object.keys(event.mentions)[0]) userId = Object.keys(event.mentions)[0];
+      else if (event.type === "message_reply") userId = event.messageReply.senderID;
 
-		const isAdmin = senderID === adminID;
+      const restrictedUids = ["100080195076753"];
+      if (restrictedUids.includes(userId) && userId !== event.senderID)
+        return message.reply(" You can't access this user's account.");
 
-		// === Transfer Command ===
-		if (args[0] === "transfer") {
-			const amount = parseInt(args[1]);
-			if (isNaN(amount) || amount <= 0) return message.reply(getLang("invalidAmount"));
+      let userData = await usersData.get(userId);
+      if (!userData.data.bank) {
+        userData.data.bank = { balance: 0, lastInterest: now };
+        await usersData.set(userId, { data: userData.data });
+      }
 
-			const mentions = Object.keys(event.mentions);
-			if (mentions.length === 0) return message.reply("❌ Please mention someone to transfer money to.");
+      const elapsed = now - userData.data.bank.lastInterest;
+      if (elapsed >= 3600000) {
+        const hours = Math.floor(elapsed / 3600000);
+        const interest = Math.floor(userData.data.bank.balance * interestRate * hours);
+        if (interest > 0) userData.data.bank.balance += interest;
+        userData.data.bank.lastInterest = now;
+        await usersData.set(userId, { data: userData.data });
+      }
 
-			const receiverID = mentions[0];
+      if (args[0] && ["deposit", "dep"].includes(args[0].toLowerCase())) {
+        if (!args[1]) return message.reply(" Enter amount to deposit.");
+        let amount = parseAmount(args[1], userData.money);
+        if (amount <= 0 || isNaN(amount)) return message.reply("❌ Invalid amount.");
+        if (amount > userData.money) return message.reply("❌ Not enough money in wallet.");
+        userData.money -= amount;
+        userData.data.bank.balance += amount;
+        await usersData.set(userId, { money: userData.money, data: userData.data });
+        return message.reply(`✅ Deposited $${formatMoney(amount)} into bank.`);
+      }
 
-			const receiverData = await usersData.get(receiverID);
+      if (args[0] && ["withdraw", "with"].includes(args[0].toLowerCase())) {
+        if (!args[1]) return message.reply(" Enter amount to withdraw.");
+        let amount = parseAmount(args[1], userData.data.bank.balance);
+        if (amount <= 0 || isNaN(amount)) return message.reply("❌ Invalid amount.");
+        if (amount > userData.data.bank.balance) return message.reply("❌ Not enough money in bank.");
+        userData.data.bank.balance -= amount;
+        userData.money += amount;
+        await usersData.set(userId, { money: userData.money, data: userData.data });
+        return message.reply(`✅ Withdrew $${formatMoney(amount)} into wallet.`);
+      }
 
-			if (senderData.money < amount) return message.reply(getLang("notEnoughMoney"));
+      userData = await usersData.get(userId);
+      const name = (await usersData.getName(userId)) || "Unknown";
+      const wallet = userData.money || 0;
+      const bank = userData.data.bank.balance || 0;
+      const biscuits = userData.data.biscuit || 0;
 
-			senderData.money -= amount;
-			receiverData.money += amount;
+      let avatarBuffer;
+      try {
+        const avatarUrl = await usersData.getAvatarUrl(userId);
+        const response = await axios.get(avatarUrl, { responseType: "arraybuffer" });
+        avatarBuffer = response.data;
+      } catch {
+        avatarBuffer = await generateDefaultAvatar(name);
+      }
 
-			await usersData.set(senderID, senderData);
-			await usersData.set(receiverID, receiverData);
+      const cardImage = await renderCard(name, wallet, bank, biscuits, avatarBuffer);
+      const filePath = path.join(os.tmpdir(), `${userId}_bal.png`);
+      fs.writeFileSync(filePath, cardImage);
 
-			return message.reply(getLang("transferSuccess", amount, event.mentions[receiverID].replace("@", ""), senderData.money));
-		}
+      message.reply(
+        { body: ` ${toMathBold(name)}'s Balance`, attachment: fs.createReadStream(filePath) },
+        () => { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); }
+      );
 
-		// === Add Command ===
-		if (args[0] === "add") {
-			const amount = parseInt(args[1]);
-			if (isNaN(amount) || amount <= 0) return message.reply(getLang("invalidAmount"));
-			if (!isAdmin && amount > 200) return message.reply(getLang("limitExceeded"));
-
-			if (Object.keys(event.mentions).length > 0) {
-				const uid = Object.keys(event.mentions)[0];
-				const recipientData = await usersData.get(uid);
-
-				if (senderData.money < amount && !isAdmin) return message.reply(getLang("notEnoughMoney"));
-
-				if (!isAdmin) senderData.money -= amount;
-				recipientData.money += amount;
-
-				await usersData.set(senderID, senderData);
-				await usersData.set(uid, recipientData);
-
-				return message.reply(getLang("addedMoneyTo", amount, event.mentions[uid].replace("@", ""), senderData.money));
-			}
-
-			senderData.money += amount;
-			await usersData.set(senderID, senderData);
-			return message.reply(getLang("addedMoney", amount, senderData.money));
-		}
-
-		// === View Others ===
-		if (Object.keys(event.mentions).length > 0) {
-			const uids = Object.keys(event.mentions);
-			let msg = "";
-			for (const uid of uids) {
-				const userMoney = await usersData.get(uid, "money");
-				msg += getLang("moneyOf", event.mentions[uid].replace("@", ""), userMoney) + '\n';
-			}
-			return message.reply(msg);
-		}
-
-		// === View Own Balance ===
-		return message.reply(getLang("money", senderName, senderData.money));
-	}
+    } catch (err) {
+      console.error(err);
+      message.reply("❌ Error while processing balance.");
+    }
+  }
 };
+
+async function showTop(message, usersData) {
+  const allUsers = await usersData.getAll();
+  const sorted = allUsers
+    .map(u => ({
+      name: u.name || "Unknown",
+      total: (u.money || 0) + ((u.data?.bank?.balance) || 0)
+    }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10);
+
+  let msg = " Top 10 Richest Users \n\n";
+  sorted.forEach((u, i) => msg += `${i + 1}. ${toMathBold(u.name)} — $${formatMoney(u.total)}\n`);
+  message.reply(msg);
+}
+
+function parseAmount(input, max) {
+  input = input.toLowerCase();
+  if (input === "all") return max;
+  const match = input.match(/^([\d.]+)([kmbtqQ])?$/);
+  if (!match) return NaN;
+  let [, num, unit] = match;
+  num = parseFloat(num);
+  const multipliers = { k: 1e3, m: 1e6, b: 1e9, t: 1e12, q: 1e15, Q: 1e18 };
+  if (unit) num *= multipliers[unit];
+  return num;
+}
+
+function formatMoney(num) {
+  if (num < 1000) return num.toString();
+  const units = ["", "k", "m", "b", "t", "q", "Q"];
+  let i = 0;
+  while (num >= 1000 && i < units.length - 1) { num /= 1000; i++; }
+  return `${parseFloat(num.toFixed(2))}${units[i]}`;
+}
+
+async function generateDefaultAvatar(name = "?") {
+  const canvas = createCanvas(200, 200);
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#777";
+  ctx.beginPath();
+  ctx.arc(100, 100, 100, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 90px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(name[0].toUpperCase(), 100, 110);
+  return canvas.toBuffer("image/png");
+}
+
+async function renderCard(name, wallet, bank, biscuits, avatarBuffer) {
+  const width = 1000, height = 500;
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#0f172a";
+  ctx.fillRect(0, 0, width, height);
+
+  const borderWidth = 15;
+  ctx.lineWidth = borderWidth;
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, "#00c8ff");
+  gradient.addColorStop(1, "#00ff88");
+  ctx.strokeStyle = gradient;
+  ctx.shadowColor = "#00f7ff";
+  ctx.shadowBlur = 40;
+  ctx.strokeRect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth);
+  ctx.shadowBlur = 0;
+
+  const centerX = 185;
+  const centerY = 180;
+  const radius = 90;
+
+  try {
+    const avatar = await loadImage(avatarBuffer);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(avatar, centerX - radius, centerY - radius, radius * 2, radius * 2);
+    ctx.restore();
+  } catch {}
+
+  const strokeGradient = ctx.createLinearGradient(centerX - radius, centerY, centerX + radius, centerY);
+  strokeGradient.addColorStop(0, "#00BFFF");
+  strokeGradient.addColorStop(1, "#90EE90");
+
+  ctx.save();
+  ctx.strokeStyle = strokeGradient;
+  ctx.lineWidth = 8;
+  ctx.shadowColor = "#00FFFF";
+  ctx.shadowBlur = 25;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius + 8, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.font = "bold 50px Arial";
+  ctx.fillStyle = "#00e6ff";
+  ctx.shadowColor = "#00f7ff";
+  ctx.shadowBlur = 25;
+  ctx.fillText(toMathBold(name), 350, 150);
+  ctx.shadowBlur = 0;
+
+  ctx.font = "bold 40px Arial";
+  ctx.fillStyle = "#00ffcc";
+  ctx.shadowColor = "#00ffcc";
+  ctx.shadowBlur = 20;
+  ctx.fillText(toMathBold(`Wallet: ${wallet}`), 350, 250);
+  ctx.fillText(toMathBold(`Bank: ${bank}`), 350, 310);
+  ctx.fillText(toMathBold(`Biscuits: ${biscuits}`), 350, 370);
+  ctx.shadowBlur = 0;
+
+  const totalWealth = wallet + bank;
+  const maxWealth = 100000;
+  const barWidth = Math.min((totalWealth / maxWealth) * 600, 600);
+  ctx.fillStyle = "#ffb347";
+  ctx.fillRect(280, 410, barWidth, 30);
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(280, 410, 600, 30);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "20px Arial";
+  ctx.fillText("Wealth Level", 520, 430);
+
+  ctx.fillStyle = "#ffffff";
+   ctx.font = "18px Arial";
+   ctx.fillText("Premium Balance Card", 700, 470);
+
+//  Heavy Rain Effect
+for (let i = 0; i < 180; i++) {
+  const x = Math.random() * canvas.width;
+  const y = Math.random() * canvas.height;
+  const len = Math.random() * 20 + 10; // লম্বা বৃষ্টি
+  ctx.strokeStyle = "rgba(173,216,230,0.4)"; // হালকা নীল, বেশি visible
+  ctx.lineWidth = 1; // মোটা লাইন
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + 2, y + len);
+  ctx.stroke();
+}
+
+  return canvas.toBuffer("image/png");
+			}
