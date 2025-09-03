@@ -29,7 +29,7 @@ module.exports = {
       missingIdAdd: "⚠️ | Please enter ID or tag user to add admin role",
       missingIdRemove: "⚠️ | Please enter ID or tag user to remove admin role",
       listAdmin: "👑 | List of admins:\n%1",
-      noPermissionList: " - ফকিন্নি এডমিন লিস্ট দেখার যোগ্যতা নাই তর.!😾"
+      noPermissionList: " - ফকিন্নি এডমিন লিস্ট দেখার যোগ্যতা নাই     তর..!😾"
     }
   },
 
