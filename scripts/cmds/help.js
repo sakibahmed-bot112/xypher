@@ -38,7 +38,7 @@ module.exports = {
       categories[category].push(name);
     }
 
-    const helpListImages = ["https://files.catbox.moe/npi3pv.jpg"];
+    const helpListImages = ["https://files.catbox.moe/dzzf6b.jpg"];
     const helpListImage = helpListImages[Math.floor(Math.random() * helpListImages.length)];
     const rawInput = args.join(" ").trim();
 
