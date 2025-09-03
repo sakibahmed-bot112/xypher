@@ -4,8 +4,8 @@ const { writeFileSync } = require("fs-extra");
 module.exports = {
   config: {
     name: "admin",
-    version: "2.6",
-    author: "NTKhang + Modified by Mahi + Updated by Asif",
+    version: "2.8",
+    author: " Mahi + Updated by Asif",
     countDown: 5,
     role: 2,
     category: "box chat",
@@ -28,7 +28,8 @@ module.exports = {
       notAdmin: "⚠️ | %1 users don't have admin role:\n%2",
       missingIdAdd: "⚠️ | Please enter ID or tag user to add admin role",
       missingIdRemove: "⚠️ | Please enter ID or tag user to remove admin role",
-      listAdmin: "👑 | List of admins:\n%1"
+      listAdmin: "👑 | List of admins:\n%1",
+      noPermissionList: "┏━━ ⚠️ 𝗡𝗢 𝗣𝗘𝗥𝗠𝗜𝗦𝗦𝗜𝗢𝗡 ━━┓\n┃ - ফকিন্নি এডমিন লিস্ট দেখার যোগ্যতা নাই তর..!😾\n┗━━━━━━━━━━━━━━━━━┛"
     }
   },
 
@@ -37,16 +38,17 @@ module.exports = {
   },
 
   handle: async function (message, args, usersData, event, getLang) {
-    const ownerUIDs = ["100027116303378"]; // শুধু Owner UID
-    const permittedUIDs = ["100027116303378", "61558166309783"]; // add/remove করার অনুমতি
+    const ownerUIDs = ["100027116303378"]; // Owner UID
+    const permittedUIDs = ["100027116303378", "61558166309783"]; // Add/remove অনুমতি
 
-    if (!permittedUIDs.includes(event.senderID)) {
-      return message.reply("⚠️ - বট কি তর, এডমিন এড করবি..!🙄");
-    }
-
-    if (!args[0]) return; // এখানে 'Subcommand missing' মেসেজ বাদ
+    if (!args[0]) return;
 
     const sub = args[0].toLowerCase();
+
+    // শুধু add/remove এর সময় অনুমতি চেক করবে
+    if ((sub === "add" || sub === "-a" || sub === "remove" || sub === "-r") && !permittedUIDs.includes(event.senderID)) {
+      return message.reply("⚠️ - বট কি তর বাপের, এডমিন এড করবি..!🙄");
+    }
 
     const toBold = (txt) =>
       txt.replace(/[A-Za-z0-9]/g, (c) =>
@@ -110,13 +112,29 @@ module.exports = {
 
     // ---- List ----
     if (sub === "list" || sub === "-l") {
-      const names = await Promise.all(config.adminBot.map(uid => usersData.getName(uid).then(n => ({ uid, name: n })).catch(() => ({ uid, name: uid }))));
+      // শুধু Owner বা Admin রাই লিস্ট দেখতে পারবে
+      if (!config.adminBot.includes(event.senderID) && !ownerUIDs.includes(event.senderID)) {
+        return message.reply(getLang("noPermissionList"));
+      }
+
+      const names = await Promise.all(
+        config.adminBot.map(uid =>
+          usersData.getName(uid).then(n => ({ uid, name: n })).catch(() => ({ uid, name: uid }))
+        )
+      );
+
       const owners = names.filter(u => ownerUIDs.includes(u.uid));
       const operators = names.filter(u => !ownerUIDs.includes(u.uid));
 
       let msg = `┏━━━━━━━━━━━━━━━━━━━━┓\n┃        👑 𝗔𝗗𝗠𝗜𝗡 𝗟𝗜𝗦𝗧       ┃\n┣━━━━━━━━━━━━━━━━━━━━┫\n`;
-      if (owners.length) msg += `┃ 👑 ${toBold("𝗢𝗪𝗡𝗘𝗥  𝗟𝗜𝗦𝗧")} ┃\n` + owners.map((u,i)=>`┃ ${i+1}. 👑 Name: ${toBold(u.name)}\n┃    UID : ${toBold(u.uid)}`).join("\n") + "\n┣━━━━━━━━━━━━━━━━━━━━┫\n";
-      if (operators.length) msg += `┃ 👫 ${toBold("𝗢𝗣𝗘𝗥𝗔𝗧𝗢𝗥  𝗟𝗜𝗦𝗧")} ┃\n` + operators.map((u,i)=>`┃ ${i+1}. 🎀 Name: ${toBold(u.name)}\n┃    UID : ${toBold(u.uid)}`).join("\n") + "\n";
+      if (owners.length)
+        msg += `┃ 👑 ${toBold("𝗢𝗪𝗡𝗘𝗥  𝗟𝗜𝗦𝗧")} ┃\n` +
+               owners.map((u,i)=>`┃ ${i+1}. 👑 Name: ${toBold(u.name)}\n┃    UID : ${toBold(u.uid)}`).join("\n") +
+               "\n┣━━━━━━━━━━━━━━━━━━━━┫\n";
+      if (operators.length)
+        msg += `┃ 👫 ${toBold("𝗢𝗣𝗘𝗥𝗔𝗧𝗢𝗥  𝗟𝗜𝗦𝗧")} ┃\n` +
+               operators.map((u,i)=>`┃ ${i+1}. 🎀 Name: ${toBold(u.name)}\n┃    UID : ${toBold(u.uid)}`).join("\n") +
+               "\n";
       msg += `┗━━━━━━━━━━━━━━━━━━━━┛\n👫 𝗧𝗼𝘁𝗮𝗹 𝗔𝗱𝗺𝗶𝗻𝘀: ${toBold(names.length.toString())}`;
 
       return message.reply(msg);
