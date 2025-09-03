@@ -3,7 +3,7 @@ const axios = require("axios");
 module.exports = {
   config: {
     name: "font",
-    aliases: ["font3", "style"],
+    aliases: ["font", "style"],
     version: "1.0",
     author: "Ew'r Saim",
     countDown: 5,
