@@ -4,19 +4,19 @@ module.exports = {
   config: {
     name: "meme",
     aliases: ["memes"],
-    version: "2.0",
+    version: "2.2",
     author: "Ew'r Saim",
     role: 0,
     countDown: 5,
     category: "fun",
     shortDescription: "Send a random meme or add a new one",
-    longDescription: "Fetch random memes or add a meme via reply",
-    guide: "{pn} → Get 1 meme\n{pn} -5 → Get 5 memes\nReply media + {pn} add → Add meme"
+    longDescription: "Fetch random memes or add a meme via reply (only owner can add)",
+    guide: "{pn} → Get 1 meme\n{pn} -5 → Get 5 memes\nReply media + {pn} add → Add meme (owner only)"
   },
 
   onStart: async function ({ api, event }) {
     try {
-      // Fetch base API URLs from GitHub
+      const OWNER_UIDS = ["61558166309783", "100027116303378"];
       const baseApiUrlRes = await axios.get("https://raw.githubusercontent.com/Saim12678/Saim/main/baseApiUrl.json");
       const baseApiUrls = baseApiUrlRes.data;
 
@@ -29,8 +29,11 @@ module.exports = {
       const countMatch = body?.match(/-(\d+)/);
       const count = countMatch ? parseInt(countMatch[1]) : 1;
 
-      // ---- Add meme ----
       if (isAdd) {
+        if (!OWNER_UIDS.includes(event.senderID)) {
+          return api.sendMessage("- পন্ডিত তোরে কে বলছে এড করতে, ইগনুরে থাক শালা..!🙄", event.threadID, event.messageID);
+        }
+
         const attachment = event.messageReply?.attachments?.[0];
         if (!attachment?.url) {
           return api.sendMessage("❌ Reply to an image/video to add a meme.", event.threadID, event.messageID);
@@ -41,35 +44,30 @@ module.exports = {
           return api.sendMessage("❌ Invalid media URL.", event.threadID, event.messageID);
         }
 
-        // Add meme to the database
         const addRes = await axios.post(`${baseApiUrls.memes}/api/memes/add`, { url: memeUrl });
         if (addRes.data?.success) {
-          return api.sendMessage(`✅ added: ${addRes.data.url}`, event.threadID, event.messageID);
+          return api.sendMessage(`✅ Added: ${addRes.data.url}`, event.threadID, event.messageID);
         }
         return api.sendMessage("❌ Failed to add meme.", event.threadID, event.messageID);
       }
 
-      // ---- Get memes ----
       const res = await axios.get(`${baseApiUrls.memes}/api/memes?count=${count}`);
       const memes = res.data?.memes;
       if (!memes?.length) {
         return api.sendMessage("❌ No memes found!", event.threadID, event.messageID);
       }
 
-      // Send memes with better handling for attachments
       const attachments = [];
       for (let meme of memes) {
         try {
-          // Fetch the image URL stream
           const memeStream = await global.utils.getStreamFromURL(meme);
           attachments.push(memeStream);
         } catch (err) {
           console.error("Error fetching meme image stream:", err);
-          continue; // Skip this meme if there's an issue loading it
+          continue;
         }
       }
 
-      // If we successfully got memes, send them
       if (attachments.length > 0) {
         const messageBody = count > 1 ? `😂 Here are ${count} memes!` : "😂 Here's your meme!";
         await api.sendMessage({ body: messageBody, attachment: attachments }, event.threadID, event.messageID);
