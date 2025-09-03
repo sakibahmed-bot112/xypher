@@ -7,7 +7,7 @@ module.exports = {
     version: "2.8",
     author: " Mahi + Updated by Asif",
     countDown: 5,
-    role: 2,
+    role: 0,
     category: "box chat",
     aliases: ["ad"],
     shortDescription: { en: "Add, remove, edit admin role" },
