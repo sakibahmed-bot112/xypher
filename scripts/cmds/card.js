@@ -5,7 +5,7 @@ const { createCanvas, loadImage } = require("canvas");
 
 module.exports = {
   config: {
-    name: "uidc",
+    name: "card",
     aliases: ["uidc", "uida"],
     version: "1.1.0",
     author: "Muzan",
