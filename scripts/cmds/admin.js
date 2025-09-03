@@ -7,7 +7,7 @@ module.exports = {
     version: "2.8",
     author: " Mahi + Updated by Asif",
     countDown: 5,
-    role: 2,
+    role: 0,
     category: "box chat",
     aliases: ["ad"],
     shortDescription: { en: "Add, remove, edit admin role" },
@@ -22,14 +22,14 @@ module.exports = {
 
   langs: {
     en: {
-      added: `┏━━ ✅ 𝗔𝗗𝗗𝗘𝗗 [ %1 ] ━━┓\n%2\n┗━━━━━━━━━━━━━━━━━┛`,
-      alreadyAdmin: `┏━━ ⚠️ 𝗔𝗟𝗥𝗘𝗔𝗗𝗬 [ %1 ] ━━┓\n%2\n┗━━━━━━━━━━━━━━━━━┛`,
-      removed: `┏━━ ❌ 𝗥𝗘𝗠𝗢𝗩𝗘𝗗 [ %1 ] ━━┓\n%2\n┗━━━━━━━━━━━━━━━━━┛`,
+      added: `┏━━ ✅ 𝗔𝗗𝗗𝗘𝗗 [ %1 ] ━━━━━┓\n%2\n┗━━━━━━━━━━━━━━━━━┛`,
+      alreadyAdmin: `┏━ ⚠️ 𝗔𝗟𝗥𝗘𝗔𝗗𝗬 𝗔𝗗𝗗 [ %1 ] ━┓\n%2\n┗━━━━━━━━━━━━━━━━━┛`,
+      removed: `┏━━ ❌ 𝗥𝗘𝗠𝗢𝗩𝗘𝗗 [ %1 ] ━━┓\n%2\n┗━━━━━━━━━━━━━━━━┛`,
       notAdmin: "⚠️ | %1 users don't have admin role:\n%2",
       missingIdAdd: "⚠️ | Please enter ID or tag user to add admin role",
       missingIdRemove: "⚠️ | Please enter ID or tag user to remove admin role",
       listAdmin: "👑 | List of admins:\n%1",
-      noPermissionList: "┏━━ ⚠️ 𝗡𝗢 𝗣𝗘𝗥𝗠𝗜𝗦𝗦𝗜𝗢𝗡 ━━┓\n┃ - ফকিন্নি এডমিন লিস্ট দেখার যোগ্যতা নাই তর..!😾\n┗━━━━━━━━━━━━━━━━━┛"
+      noPermissionList: " - ফকিন্নি এডমিন লিস্ট দেখার যোগ্যতা নাই তর..!😾"
     }
   },
 
@@ -140,4 +140,4 @@ module.exports = {
       return message.reply(msg);
     }
   }
-};
+};constconst
