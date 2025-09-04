@@ -5,14 +5,20 @@ const { createCanvas, loadImage } = require("canvas");
 
 // ---- Math Bold Converter ----
 function toMathBold(input) {
-  const A = "A".codePointAt(0), a = "a".codePointAt(0), ZERO = "0".codePointAt(0);
-  const BOLD_A = 0x1D400, BOLD_a = 0x1D41A, BOLD_0 = 0x1D7CE;
+  const A = "A".codePointAt(0),
+    a = "a".codePointAt(0),
+    ZERO = "0".codePointAt(0);
+  const BOLD_A = 0x1d400,
+    BOLD_a = 0x1d41a,
+    BOLD_0 = 0x1d7ce;
   let out = "";
   for (const ch of input) {
     const cp = ch.codePointAt(0);
     if (cp >= 65 && cp <= 90) out += String.fromCodePoint(BOLD_A + (cp - A));
-    else if (cp >= 97 && cp <= 122) out += String.fromCodePoint(BOLD_a + (cp - a));
-    else if (cp >= 48 && cp <= 57) out += String.fromCodePoint(BOLD_0 + (cp - ZERO));
+    else if (cp >= 97 && cp <= 122)
+      out += String.fromCodePoint(BOLD_a + (cp - a));
+    else if (cp >= 48 && cp <= 57)
+      out += String.fromCodePoint(BOLD_0 + (cp - ZERO));
     else out += ch;
   }
   return out;
@@ -24,20 +30,26 @@ module.exports = {
     aliases: ["u2", "uidc"],
     version: "1.1.0",
     author: "Muzan",
-    prefix: "awto"
+    prefix: "awto",
     role: 0,
     shortDescription: "Reply/Mention-based UID canvas card",
-    category: "without prefix"
+    category: "without prefix",
     cooldowns: 5,
   },
 
   onStart: async function ({ message, event, api, usersData }) {
     const safeReply = async (text) => {
       try {
-        if (message && typeof message.reply === "function") return await message.reply(text);
-        if (message && typeof message.send === "function") return await message.send(text);
+        if (message && typeof message.reply === "function")
+          return await message.reply(text);
+        if (message && typeof message.send === "function")
+          return await message.send(text);
         if (api && typeof api.sendMessage === "function") {
-          const threadID = event?.threadID || event?.thread || message?.threadID || event?.senderID;
+          const threadID =
+            event?.threadID ||
+            event?.thread ||
+            message?.threadID ||
+            event?.senderID;
           return await api.sendMessage(text, threadID);
         }
       } catch (e) {
@@ -49,7 +61,8 @@ module.exports = {
       // -------- Resolve target UID & name --------
       let targetUID = null;
       const mentions =
-        (event && (event.mentions || (event.message && event.message.mentions))) ||
+        (event &&
+          (event.mentions || (event.message && event.message.mentions))) ||
         (message && message.mentions) ||
         null;
 
@@ -57,13 +70,19 @@ module.exports = {
         targetUID = Object.keys(mentions)[0];
       }
       if (!targetUID) {
-        targetUID = event?.messageReply?.senderID || (event?.messageReply && event.messageReply.senderID) || null;
+        targetUID =
+          event?.messageReply?.senderID ||
+          (event?.messageReply && event.messageReply.senderID) ||
+          null;
       }
       if (!targetUID) {
-        targetUID = event?.senderID || message?.senderID || message?.author || null;
+        targetUID =
+          event?.senderID || message?.senderID || message?.author || null;
       }
       if (!targetUID) {
-        return safeReply("❌ লক্ষ্য ব্যবহারকারী সনাক্ত করা যায়নি। রিপ্লাই/মেনশন করে দেখুন।");
+        return safeReply(
+          "❌ লক্ষ্য ব্যবহারকারী সনাক্ত করা যায়নি। রিপ্লাই/মেনশন করে দেখুন।"
+        );
       }
 
       // Get display name
@@ -75,7 +94,11 @@ module.exports = {
         }
       } catch (e) {}
       try {
-        if ((name === "Unknown User") && api && typeof api.getUserInfo === "function") {
+        if (
+          name === "Unknown User" &&
+          api &&
+          typeof api.getUserInfo === "function"
+        ) {
           const info = await api.getUserInfo(targetUID);
           name = info?.[targetUID]?.name || info?.name || name;
         }
@@ -87,7 +110,10 @@ module.exports = {
           if (usersData && typeof usersData.getAvatarUrl === "function") {
             const url = await usersData.getAvatarUrl(uid);
             if (url) {
-              const res = await axios.get(url, { responseType: "arraybuffer", timeout: 10000 });
+              const res = await axios.get(url, {
+                responseType: "arraybuffer",
+                timeout: 10000,
+              });
               return Buffer.from(res.data);
             }
           }
@@ -95,9 +121,16 @@ module.exports = {
         try {
           if (api && typeof api.getUserInfo === "function") {
             const info = await api.getUserInfo(uid);
-            const avatarUrl = info?.[uid]?.thumbSrc || info?.thumbSrc || info?.[uid]?.profileUrl || info?.profileUrl;
+            const avatarUrl =
+              info?.[uid]?.thumbSrc ||
+              info?.thumbSrc ||
+              info?.[uid]?.profileUrl ||
+              info?.profileUrl;
             if (avatarUrl) {
-              const res = await axios.get(avatarUrl, { responseType: "arraybuffer", timeout: 10000 });
+              const res = await axios.get(avatarUrl, {
+                responseType: "arraybuffer",
+                timeout: 10000,
+              });
               return Buffer.from(res.data);
             }
           }
@@ -107,7 +140,8 @@ module.exports = {
       const avatarBuf = await getAvatarBuffer(targetUID);
 
       // -------- Canvas --------
-      const W = 1000, H = 500;
+      const W = 1000,
+        H = 500;
       const canvas = createCanvas(W, H);
       const ctx = canvas.getContext("2d");
 
@@ -125,7 +159,13 @@ module.exports = {
       for (let i = 0; i < 120; i++) {
         ctx.globalAlpha = Math.random() * 0.6 + 0.15;
         ctx.beginPath();
-        ctx.arc(Math.random() * W, Math.random() * H, Math.random() * 1.3 + 0.2, 0, Math.PI * 2);
+        ctx.arc(
+          Math.random() * W,
+          Math.random() * H,
+          Math.random() * 1.3 + 0.2,
+          0,
+          Math.PI * 2
+        );
         ctx.fillStyle = "#cfe9ff";
         ctx.fill();
       }
@@ -141,7 +181,11 @@ module.exports = {
         ctx.closePath();
       }
 
-      const cardX = 40, cardY = 40, cardW = W - 80, cardH = H - 80, rad = 22;
+      const cardX = 40,
+        cardY = 40,
+        cardW = W - 80,
+        cardH = H - 80,
+        rad = 22;
       ctx.save();
       ctx.shadowColor = "rgba(0,0,0,0.35)";
       ctx.shadowBlur = 20;
@@ -162,7 +206,13 @@ module.exports = {
       if (avatarBuf) {
         try {
           const img = await loadImage(avatarBuf);
-          ctx.drawImage(img, avatarCX - avatarR, avatarCY - avatarR, avatarR * 2, avatarR * 2);
+          ctx.drawImage(
+            img,
+            avatarCX - avatarR,
+            avatarCY - avatarR,
+            avatarR * 2,
+            avatarR * 2
+          );
         } catch (e) {
           drawInitials();
         }
@@ -170,8 +220,19 @@ module.exports = {
       ctx.restore();
 
       function drawInitials() {
-        const initials = (name.split(" ").filter(Boolean).slice(0, 2).map(s => s[0]?.toUpperCase()).join("") || "U");
-        const g = ctx.createLinearGradient(avatarCX - avatarR, avatarCY - avatarR, avatarCX + avatarR, avatarCY + avatarR);
+        const initials =
+          name
+            .split(" ")
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((s) => s[0]?.toUpperCase())
+            .join("") || "U";
+        const g = ctx.createLinearGradient(
+          avatarCX - avatarR,
+          avatarCY - avatarR,
+          avatarCX + avatarR,
+          avatarCY + avatarR
+        );
         g.addColorStop(0, "#1f3b73");
         g.addColorStop(1, "#2a6f8f");
         ctx.fillStyle = g;
@@ -239,11 +300,19 @@ module.exports = {
       ctx.font = "bold 40px sans-serif";
       ctx.fillStyle = "#bfeaff";
       ctx.textAlign = "center";
-      ctx.fillText(`UID: ${toMathBold(targetUID)}`, cardX + cardW / 2, cardY + cardH - 70);
+      ctx.fillText(
+        `UID: ${toMathBold(targetUID)}`,
+        cardX + cardW / 2,
+        cardY + cardH - 70
+      );
 
       ctx.font = "16px sans-serif";
       ctx.fillStyle = "rgba(255,255,255,0.6)";
-      ctx.fillText("A premium Canvas uid Card |Muzan", cardX + cardW / 2, cardY + cardH - 36);
+      ctx.fillText(
+        "A premium Canvas uid Card |Muzan",
+        cardX + cardW / 2,
+        cardY + cardH - 36
+      );
 
       const cacheDir = path.join(__dirname, "cache");
       fs.mkdirSync(cacheDir, { recursive: true });
@@ -252,18 +321,28 @@ module.exports = {
       fs.writeFileSync(outPath, buffer);
 
       try {
-        message.reply({
-          body: `👤 ${toMathBold(name)}\n🆔 UID: ${toMathBold(targetUID)}`,
-          attachment: fs.createReadStream(outPath)
-        }, () => fs.unlinkSync(outPath));
+        message.reply(
+          {
+            body: `👤 ${toMathBold(name)}\n🆔 UID: ${toMathBold(targetUID)}`,
+            attachment: fs.createReadStream(outPath),
+          },
+          () => fs.unlinkSync(outPath)
+        );
       } catch (err) {
         console.error(err);
         message.reply("❌ Couldn't generate UID card.");
       }
-
     } catch (err) {
       console.error("uidc error:", err?.stack || err);
-      try { await safeReply(`❌ একটি ত্রুটি ঘটেছে। লগ চেক করুন। ( ${err?.message || "unknown"} )`); } catch(e){console.error(e);}
+      try {
+        await safeReply(
+          `❌ একটি ত্রুটি ঘটেছে। লগ চেক করুন। ( ${
+            err?.message || "unknown"
+          } )`
+        );
+      } catch (e) {
+        console.error(e);
+      }
     }
   },
 };
