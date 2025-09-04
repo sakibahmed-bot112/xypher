@@ -21,7 +21,7 @@ function toMathBold(input) {
 module.exports = {
   config: {
     name: "xid",
-    aliases: [],
+    aliases: ["xid"],
     version: "1.1.0",
     author: "Muzan",
     cooldowns: 3,
