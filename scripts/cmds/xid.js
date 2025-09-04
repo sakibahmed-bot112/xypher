@@ -46,7 +46,7 @@ module.exports = {
       fs.writeFileSync(filePath, card);
 
       message.reply({
-        body: `👤 ${name}\n🆔 UID: ${uid}`,
+        body: `💁‍♂️ ${name}\n🆔 UID: ${uid}`,
         attachment: fs.createReadStream(filePath)
       }, () => fs.unlinkSync(filePath));
     } catch (err) {
