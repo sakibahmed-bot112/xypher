@@ -27,6 +27,7 @@ module.exports = {
     cooldowns: 3,
     role: 0,
     shortDescription: "Reply/Mention-based UID canvas card",
+    autoLoad: true // ✅ এবার লোড দিতে হবে না
   },
 
   onStart: async function ({ message, event, api, usersData }) {
