@@ -22,8 +22,8 @@ function toMathBold(input) {
 module.exports = {
   config: {
     name: "bal",
-    aliases: ["bal", "b"],
-    version: "2.1",
+    aliases: ["h", "b"],
+    version: "2.2",
     author: "Muzan",
     role: 0,
     shortDescription: "Show user balance with styled glowing border",
@@ -64,10 +64,11 @@ module.exports = {
         await usersData.set(userId, { data: userData.data });
       }
 
+      // Deposit
       if (args[0] && ["deposit", "dep"].includes(args[0].toLowerCase())) {
-        if (!args[1]) return message.reply(" Enter amount to deposit.");
+        if (!args[1]) return message.reply("💰 Enter amount to deposit.");
         let amount = parseAmount(args[1], userData.money);
-        if (amount <= 0 || isNaN(amount)) return message.reply("❌ Invalid amount.");
+        if (amount <= 0) return message.reply("❌ Invalid amount.");
         if (amount > userData.money) return message.reply("❌ Not enough money in wallet.");
         userData.money -= amount;
         userData.data.bank.balance += amount;
@@ -75,10 +76,11 @@ module.exports = {
         return message.reply(`✅ Deposited $${formatMoney(amount)} into bank.`);
       }
 
+      // Withdraw
       if (args[0] && ["withdraw", "with"].includes(args[0].toLowerCase())) {
-        if (!args[1]) return message.reply(" Enter amount to withdraw.");
+        if (!args[1]) return message.reply("💰 Enter amount to withdraw.");
         let amount = parseAmount(args[1], userData.data.bank.balance);
-        if (amount <= 0 || isNaN(amount)) return message.reply("❌ Invalid amount.");
+        if (amount <= 0) return message.reply("❌ Invalid amount.");
         if (amount > userData.data.bank.balance) return message.reply("❌ Not enough money in bank.");
         userData.data.bank.balance -= amount;
         userData.money += amount;
@@ -132,23 +134,34 @@ async function showTop(message, usersData) {
   message.reply(msg);
 }
 
+// ✅ parseAmount with k,m,b,t...
 function parseAmount(input, max) {
   input = input.toLowerCase();
   if (input === "all") return max;
-  const match = input.match(/^([\d.]+)([kmbtqQ])?$/);
+  const match = input.match(/^([\d.]+)([kmbtqQsoNd])?$/i);
   if (!match) return NaN;
   let [, num, unit] = match;
   num = parseFloat(num);
-  const multipliers = { k: 1e3, m: 1e6, b: 1e9, t: 1e12, q: 1e15, Q: 1e18 };
-  if (unit) num *= multipliers[unit];
+
+  const multipliers = {
+    k: 1e3, m: 1e6, b: 1e9, t: 1e12,
+    q: 1e15, Q: 1e18, s: 1e21, S: 1e24,
+    o: 1e27, n: 1e30, d: 1e33
+  };
+
+  if (unit && multipliers[unit]) num *= multipliers[unit];
   return num;
 }
 
+// ✅ formatMoney with shortcuts
 function formatMoney(num) {
   if (num < 1000) return num.toString();
-  const units = ["", "k", "m", "b", "t", "q", "Q"];
+  const units = ["", "k", "m", "b", "t", "q", "Q", "s", "S", "o", "n", "d"];
   let i = 0;
-  while (num >= 1000 && i < units.length - 1) { num /= 1000; i++; }
+  while (num >= 1000 && i < units.length - 1) {
+    num /= 1000;
+    i++;
+  }
   return `${parseFloat(num.toFixed(2))}${units[i]}`;
 }
 
@@ -186,10 +199,7 @@ async function renderCard(name, wallet, bank, biscuits, avatarBuffer) {
   ctx.strokeRect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth);
   ctx.shadowBlur = 0;
 
-  const centerX = 185;
-  const centerY = 180;
-  const radius = 90;
-
+  const centerX = 185, centerY = 180, radius = 90;
   try {
     const avatar = await loadImage(avatarBuffer);
     ctx.save();
@@ -204,14 +214,11 @@ async function renderCard(name, wallet, bank, biscuits, avatarBuffer) {
   const strokeGradient = ctx.createLinearGradient(centerX - radius, centerY, centerX + radius, centerY);
   strokeGradient.addColorStop(0, "#00BFFF");
   strokeGradient.addColorStop(1, "#90EE90");
-
   ctx.save();
   ctx.strokeStyle = strokeGradient;
   ctx.lineWidth = 8;
   ctx.shadowColor = "#00FFFF";
   ctx.shadowBlur = 25;
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 0;
   ctx.beginPath();
   ctx.arc(centerX, centerY, radius + 8, 0, Math.PI * 2);
   ctx.stroke();
@@ -224,13 +231,14 @@ async function renderCard(name, wallet, bank, biscuits, avatarBuffer) {
   ctx.fillText(toMathBold(name), 350, 150);
   ctx.shadowBlur = 0;
 
+  // ---- use short formatted money here ----
   ctx.font = "bold 40px Arial";
   ctx.fillStyle = "#00ffcc";
   ctx.shadowColor = "#00ffcc";
   ctx.shadowBlur = 20;
-  ctx.fillText(toMathBold(`Wallet: ${wallet}`), 350, 250);
-  ctx.fillText(toMathBold(`Bank: ${bank}`), 350, 310);
-  ctx.fillText(toMathBold(`Biscuits: ${biscuits}`), 350, 370);
+  ctx.fillText(toMathBold(`Wallet: ${formatMoney(wallet)}`), 350, 250);
+  ctx.fillText(toMathBold(`Bank: ${formatMoney(bank)}`), 350, 310);
+  ctx.fillText(toMathBold(`Biscuits: ${formatMoney(biscuits)}`), 350, 370);
   ctx.shadowBlur = 0;
 
   const totalWealth = wallet + bank;
@@ -246,21 +254,20 @@ async function renderCard(name, wallet, bank, biscuits, avatarBuffer) {
   ctx.fillText("Wealth Level", 520, 430);
 
   ctx.fillStyle = "#ffffff";
-   ctx.font = "18px Arial";
-   ctx.fillText("Premium Balance Card", 700, 470);
+  ctx.font = "18px Arial";
+  ctx.fillText("Premium Balance Card", 700, 470);
 
-//  Heavy Rain Effect
-for (let i = 0; i < 180; i++) {
-  const x = Math.random() * canvas.width;
-  const y = Math.random() * canvas.height;
-  const len = Math.random() * 20 + 10; // লম্বা বৃষ্টি
-  ctx.strokeStyle = "rgba(173,216,230,0.4)"; // হালকা নীল, বেশি visible
-  ctx.lineWidth = 1; // মোটা লাইন
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.lineTo(x + 2, y + len);
-  ctx.stroke();
-}
+  for (let i = 0; i < 180; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const len = Math.random() * 20 + 10;
+    ctx.strokeStyle = "rgba(173,216,230,0.4)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + 2, y + len);
+    ctx.stroke();
+  }
 
   return canvas.toBuffer("image/png");
 			}
