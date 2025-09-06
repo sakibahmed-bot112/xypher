@@ -27,7 +27,7 @@ module.exports = {
   onStart: async function ({ api, event, usersData, threadsData }) {
     try {
       // Send loading message
-      const loadingMsg = await api.sendMessage("📊 Analyzing system performance...", event.threadID);
+      const loadingMsg = await api.sendMessage("📊 Elon System monitor creating..", event.threadID);
 
       // Gather real system stats
       const totalUsers = await usersData.getAll();
@@ -437,7 +437,7 @@ function drawHomoHostHeader(ctx, width, stats) {
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
   ctx.textAlign = 'left';
-  ctx.fillText('HomoHost', 80, 55);
+  ctx.fillText('Elon Ten', 80, 55);
   
   // Date and system info (top right) with exact styling
   ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
