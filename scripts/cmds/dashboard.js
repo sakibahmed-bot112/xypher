@@ -907,12 +907,12 @@ function drawHomoHostSystemInfo(ctx, x, y, w, h, stats) {
     
     // Label - perfect gray color matching reference
     ctx.fillStyle = '#94a3b8';
-    ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+    ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.fillText(info.label, info.x + 30, info.y);
     
     // Value - perfect blue color matching reference
-    ctx.fillStyle = '#60a5fa';
-    ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.fillText(info.value, info.x + 130, info.y);
   });
 }
