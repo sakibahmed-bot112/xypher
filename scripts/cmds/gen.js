@@ -9,18 +9,19 @@ module.exports = {
     name: "gen",
     version: "1.3",
     author: "UPoL Zox",
+    prefix: "awto",
     shortDescription: "Generate an image using picedit.top API",
-    guide: "{p}{n} <prompt>"
+    guide: "{p}{n} <prompt>",
+    category: "without prefix",
   },
 
   onStart: async function ({ args, message }) {
     try {
       const prompt = args.join(" ").trim();
-      if (!prompt) return message.reply("âš ï¸ Please provide a prompt for the image.");
+      if (!prompt) return message.reply("⚠âš ï¸� Please provide a prompt for the image .");
 
-      const waiting = await message.reply(`ðŸŽ¨ Generating image...`);
+      const waiting = await message.reply(` âš ï¸� generating image...`);
 
-      
       const response = await fetch("https://www.picedit.top/api/image", {
         method: "POST",
         headers: {
@@ -34,21 +35,23 @@ module.exports = {
       });
 
       if (!response.ok) {
-        message.reply(`HTTP ${response.status} - ${await response.text()}`);
+        return message.reply(`HTTP ${response.status} - ${await response.text()}`);
       }
 
       const data = await response.json();
-      if (!data.image) message.reply("No image returned from API");
+      if (!data.image) return message.reply("❌ No image returned from API.");
 
       const base64Data = data.image.split(",")[1];
       const imgBuffer = Buffer.from(base64Data, "base64");
       const filePath = path.join(os.tmpdir(), `picedit_${randomUUID()}.png`);
       fs.writeFileSync(filePath, imgBuffer);
 
-      try { await message.unsend(waiting.messageID); } catch {}
+      try { 
+        await message.unsend(waiting.messageID); 
+      } catch {}
 
       await message.reply({
-        body: `âœ¨ Here is your image:`,
+        body: `✨ Here is your image:`,
         attachment: fs.createReadStream(filePath)
       });
 
@@ -56,7 +59,7 @@ module.exports = {
 
     } catch (err) {
       console.error("PicEdit error:", err);
-      return message.reply("âŒ Failed to generate image. Please try again later.");
+      return message.reply("❌ Failed to generate image. Please try again later.");
     }
   }
 };
