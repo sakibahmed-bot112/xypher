@@ -9,7 +9,7 @@ const { execSync } = require('child_process');
 module.exports = {
   config: {
     name: 'dashboard',
-    aliases: ['sys', 'db', 'stats'],
+    aliases: ['db', 'sys', 'stats'],
     version: '3.3',
     author: 'TawsiN',
     role: 1,
@@ -27,7 +27,7 @@ module.exports = {
   onStart: async function ({ api, event, usersData, threadsData }) {
     try {
       // Send loading message
-      const loadingMsg = await api.sendMessage("📊 Elon Ten system Monitor creating ...", event.threadID);
+      const loadingMsg = await api.sendMessage("📊 Elon Ten system monitor creating...", event.threadID);
 
       // Gather real system stats
       const totalUsers = await usersData.getAll();
@@ -200,7 +200,7 @@ module.exports = {
 
 // Create formatted dashboard text output
 function createDashboardText(stats) {
-  return ` 🔰 Elon Ten System Dashboard
+  return `🔰 Elon Ten System Dashboard
 
 # 📈 Uptime:
 • Server Uptime: ${stats.systemUptime}
@@ -901,17 +901,17 @@ function drawHomoHostSystemInfo(ctx, x, y, w, h, stats) {
   sysInfo.forEach((info) => {
     // Icon with perfect positioning
     ctx.fillStyle = '#ffffff';
-    ctx.font = '15px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+    ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.textAlign = 'left';
     ctx.fillText(info.icon, info.x, info.y);
-    px
+    
     // Label - perfect gray color matching reference
     ctx.fillStyle = '#94a3b8';
-    ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+    ctx.font = '15px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.fillText(info.label, info.x + 30, info.y);
     
     // Value - perfect blue color matching reference
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = '#ffff';
     ctx.font = 'bold 16px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.fillText(info.value, info.x + 130, info.y);
   });
@@ -1004,7 +1004,7 @@ function drawHomoHostProcessStats(ctx, x, y, w, h, stats) {
     
     // Value - perfect white color matching reference
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+    ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.fillText(info.value, info.x + 120, info.y);
   });
 }
@@ -1044,4 +1044,4 @@ function adjustColorBrightness(color, percent) {
   return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
     (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
     (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
-                              }
+        }
