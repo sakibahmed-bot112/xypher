@@ -27,7 +27,7 @@ module.exports = {
   onStart: async function ({ api, event, usersData, threadsData }) {
     try {
       // Send loading message
-      const loadingMsg = await api.sendMessage("📊 Analyzing system performance...", event.threadID);
+      const loadingMsg = await api.sendMessage("📊 Elon Ten system Monitor creating ...", event.threadID);
 
       // Gather real system stats
       const totalUsers = await usersData.getAll();
@@ -901,10 +901,10 @@ function drawHomoHostSystemInfo(ctx, x, y, w, h, stats) {
   sysInfo.forEach((info) => {
     // Icon with perfect positioning
     ctx.fillStyle = '#ffffff';
-    ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+    ctx.font = '15px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.textAlign = 'left';
     ctx.fillText(info.icon, info.x, info.y);
-    
+    px
     // Label - perfect gray color matching reference
     ctx.fillStyle = '#94a3b8';
     ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
@@ -912,7 +912,7 @@ function drawHomoHostSystemInfo(ctx, x, y, w, h, stats) {
     
     // Value - perfect blue color matching reference
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+    ctx.font = 'bold 16px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.fillText(info.value, info.x + 130, info.y);
   });
 }
