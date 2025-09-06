@@ -8,8 +8,8 @@ const { execSync } = require('child_process');
 
 module.exports = {
   config: {
-    name: 'dashboard',
-    aliases: ['ut', 'status', 'stats'],
+    name: 'system',
+    aliases: ['ut', 'db', 'stats'],
     version: '3.2',
     author: 'TawsiN',
     role: 1,
