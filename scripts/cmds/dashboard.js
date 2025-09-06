@@ -200,7 +200,7 @@ module.exports = {
 
 // Create formatted dashboard text output
 function createDashboardText(stats) {
-  return `⚡ ElonHost System Dashboard
+  return `🔰 Elon Ten Host System Dashboard
 
 # 📈 Uptime:
 • Server Uptime: ${stats.systemUptime}
@@ -437,7 +437,7 @@ function drawHomoHostHeader(ctx, width, stats) {
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
   ctx.textAlign = 'left';
-  ctx.fillText('Elon Ten', 80, 55);
+  ctx.fillText('Elon Ten Host', 80, 55);
   
   // Date and system info (top right) with exact styling
   ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
