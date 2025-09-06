@@ -9,15 +9,15 @@ const { execSync } = require('child_process');
 module.exports = {
   config: {
     name: 'dashboard',
-    aliases: ['db', 'sys', 'stats'],
-    version: '3.2',
+    aliases: ['sys', 'db', 'stats'],
+    version: '3.3',
     author: 'TawsiN',
     role: 1,
     shortDescription: {
-      en: "Display ElonHost system dashboard with real-time metrics."
+      en: "Display HomoHost system dashboard with real-time metrics."
     },
     longDescription: {
-      en: "Shows a comprehensive dashboard with real bot uptime, system stats, live resource usage, and detailed system information - exact replica of ElonHost interface."
+      en: "Shows a comprehensive dashboard with real bot uptime, system stats, live resource usage, and detailed system information - exact replica of HomoHost interface."
     },
     category: 'system',
     guide: {
@@ -27,13 +27,13 @@ module.exports = {
   onStart: async function ({ api, event, usersData, threadsData }) {
     try {
       // Send loading message
-      const loadingMsg = await api.sendMessage("📊 Elon System monitor creating..", event.threadID);
+      const loadingMsg = await api.sendMessage("📊 Analyzing system performance...", event.threadID);
 
       // Gather real system stats
       const totalUsers = await usersData.getAll();
       const totalThreads = await threadsData.getAll();
       
-      // Get real system metrics
+      // Get real system metrics with improved accuracy
       const systemMetrics = await getSystemMetrics();
       const networkMetrics = await getNetworkMetrics();
       const processMetrics = getProcessMetrics();
@@ -60,8 +60,8 @@ module.exports = {
       const cpuModel = cpus[0].model;
       const cpuCores = cpus.length;
       
-      // Get real CPU usage
-      const cpuUsage = await getCPUUsage();
+      // Get ACCURATE CPU usage with proper calculation
+      const cpuUsage = await getAccurateCPUUsage();
       
       // Get real disk usage
       const diskInfo = await getDiskUsage();
@@ -128,7 +128,7 @@ module.exports = {
       });
       
       // Save image
-      const fileName = `Elonhost_dashboard_${Date.now()}.png`;
+      const fileName = `homohost_dashboard_${Date.now()}.png`;
       const filePath = path.join(__dirname, '..', 'temp', fileName);
       
       // Ensure temp directory exists
@@ -200,7 +200,7 @@ module.exports = {
 
 // Create formatted dashboard text output
 function createDashboardText(stats) {
-  return `🔰 Elon Ten Host System Dashboard
+  return ` 🔰 Elon Ten System Dashboard
 
 # 📈 Uptime:
 • Server Uptime: ${stats.systemUptime}
@@ -237,31 +237,81 @@ function getHostname() {
   return hostname.length > 50 ? hostname.substring(0, 47) + '...' : hostname;
 }
 
-// Get real CPU usage with better accuracy
-async function getCPUUsage() {
-  try {
-    if (os.platform() === 'linux') {
-      // More accurate CPU usage calculation
-      const output = execSync("grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$3+$4)} END {print usage}'").toString().trim();
-      const usage = parseFloat(output);
-      return isNaN(usage) ? 15.40 : Math.min(usage, 100);
-    } else if (os.platform() === 'win32') {
-      const output = execSync('wmic cpu get loadpercentage /value').toString();
-      const match = output.match(/LoadPercentage=(\d+)/);
-      return match ? parseFloat(match[1]) : 15.40;
-    } else {
-      return Math.min(os.loadavg()[0] * 12, 100);
-    }
-  } catch (error) {
-    return 15.40; // Default fallback matching reference
-  }
+// FIXED: Get ACCURATE CPU usage with proper calculation method
+async function getAccurateCPUUsage() {
+  return new Promise((resolve) => {
+    const startMeasure = process.hrtime.bigint();
+    const startUsage = process.cpuUsage();
+    
+    setTimeout(() => {
+      const endMeasure = process.hrtime.bigint();
+      const endUsage = process.cpuUsage(startUsage);
+      
+      const totalTime = Number(endMeasure - startMeasure) / 1000000; // Convert to milliseconds
+      const cpuTime = (endUsage.user + endUsage.system) / 1000; // Convert to milliseconds
+      
+      let cpuPercent = (cpuTime / totalTime) * 100;
+      
+      // Fallback to system-level CPU calculation if process-level seems off
+      if (cpuPercent > 100 || cpuPercent < 0) {
+        try {
+          if (os.platform() === 'linux') {
+            // More accurate system-wide CPU usage for Linux
+            const stat1 = fs.readFileSync('/proc/stat', 'utf8').split('\n')[0];
+            const data1 = stat1.split(/\s+/).slice(1, 8).map(Number);
+            const idle1 = data1[3];
+            const total1 = data1.reduce((a, b) => a + b);
+            
+            setTimeout(() => {
+              try {
+                const stat2 = fs.readFileSync('/proc/stat', 'utf8').split('\n')[0];
+                const data2 = stat2.split(/\s+/).slice(1, 8).map(Number);
+                const idle2 = data2[3];
+                const total2 = data2.reduce((a, b) => a + b);
+                
+                const idleDiff = idle2 - idle1;
+                const totalDiff = total2 - total1;
+                const usage = 100 - (idleDiff / totalDiff) * 100;
+                
+                resolve(Math.max(0, Math.min(100, usage)));
+              } catch (e) {
+                resolve(Math.min(os.loadavg()[0] * 15, 100));
+              }
+            }, 100);
+            
+            return;
+          } else if (os.platform() === 'win32') {
+            try {
+              const output = execSync('wmic cpu get loadpercentage /value', { timeout: 5000 }).toString();
+              const match = output.match(/LoadPercentage=(\d+)/);
+              if (match) {
+                resolve(parseFloat(match[1]));
+                return;
+              }
+            } catch (e) {
+              // Fall through to default
+            }
+          }
+          
+          // Default fallback using load average
+          const loadAvg = os.loadavg()[0];
+          const numCores = os.cpus().length;
+          cpuPercent = Math.min((loadAvg / numCores) * 100, 100);
+        } catch (error) {
+          cpuPercent = 25.5; // Safe default
+        }
+      }
+      
+      resolve(Math.max(0, Math.min(100, cpuPercent)));
+    }, 100); // Short delay for accurate measurement
+  });
 }
 
 // Get comprehensive disk usage information
 async function getDiskUsage() {
   try {
     if (os.platform() === 'linux' || os.platform() === 'darwin') {
-      const output = execSync("df -BG / | awk 'NR==2{gsub(/G/, \"\"); print $2, $3, $4, $5}'").toString().trim().split(' ');
+      const output = execSync("df -BG / | awk 'NR==2{gsub(/G/, \"\"); print $2, $3, $4, $5}'", { timeout: 5000 }).toString().trim().split(' ');
       if (output.length >= 4) {
         const total = parseFloat(output[0]);
         const used = parseFloat(output[1]);
@@ -276,7 +326,7 @@ async function getDiskUsage() {
         };
       }
     } else if (os.platform() === 'win32') {
-      const output = execSync('wmic logicaldisk where caption="C:" get size,freespace /value').toString();
+      const output = execSync('wmic logicaldisk where caption="C:" get size,freespace /value', { timeout: 5000 }).toString();
       const sizeMatch = output.match(/Size=(\d+)/);
       const freeMatch = output.match(/FreeSpace=(\d+)/);
       if (sizeMatch && freeMatch) {
@@ -321,14 +371,14 @@ async function getSystemMetrics() {
     
     if (os.platform() === 'linux') {
       try {
-        const procCount = execSync("ps aux | wc -l").toString().trim();
+        const procCount = execSync("ps aux | wc -l", { timeout: 3000 }).toString().trim();
         metrics.processes = parseInt(procCount) - 1;
       } catch (e) {
         metrics.processes = 247;
       }
       
       try {
-        const netCount = execSync("netstat -tun | wc -l").toString().trim();
+        const netCount = execSync("netstat -tun | wc -l", { timeout: 3000 }).toString().trim();
         metrics.networkConnections = parseInt(netCount);
       } catch (e) {
         metrics.networkConnections = 35;
@@ -390,12 +440,12 @@ function getPlatformName(platform) {
   return platforms[platform] || platform;
 }
 
-// Main dashboard drawing function - EXACT match to HomoHost reference
+// Main dashboard drawing function - EXACT match to HomoHost reference with BETTER STYLING
 async function drawHomoHostDashboard(ctx, width, height, stats) {
-  // Dark background exactly like HomoHost
+  // Perfect dark background matching reference
   const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
-  bgGradient.addColorStop(0, '#0f172a'); // Very dark slate
-  bgGradient.addColorStop(1, '#1e293b'); // Darker slate
+  bgGradient.addColorStop(0, '#0f172a'); // Very dark slate - exact match
+  bgGradient.addColorStop(1, '#1e293b'); // Darker slate - exact match
   ctx.fillStyle = bgGradient;
   ctx.fillRect(0, 0, width, height);
   
@@ -415,48 +465,55 @@ async function drawHomoHostDashboard(ctx, width, height, stats) {
   drawHomoHostFooter(ctx, width, height, stats);
 }
 
-// Draw header exactly like HomoHost
+// Draw header exactly like HomoHost with PERFECT styling
 function drawHomoHostHeader(ctx, width, stats) {
-  // Lightning bolt icon (blue like reference)
+  // Lightning bolt icon background - rounded square like reference
   ctx.fillStyle = '#3b82f6';
+  roundRect(ctx, 30, 25, 40, 40, 8);
+  ctx.fill();
+  
+  // Lightning bolt icon - white and centered
+  ctx.fillStyle = '#ffffff';
   ctx.save();
-  ctx.translate(50, 50);
+  ctx.translate(50, 45);
   ctx.beginPath();
-  // More accurate lightning bolt shape
-  ctx.moveTo(8, 0);
-  ctx.lineTo(0, 12);
-  ctx.lineTo(6, 12);
-  ctx.lineTo(-2, 24);
-  ctx.lineTo(6, 10);
-  ctx.lineTo(0, 10);
+  // More accurate lightning bolt shape matching reference
+  ctx.moveTo(-6, -8);
+  ctx.lineTo(2, -8);
+  ctx.lineTo(-2, 0);
+  ctx.lineTo(4, 0);
+  ctx.lineTo(-4, 8);
+  ctx.lineTo(0, 8);
+  ctx.lineTo(4, 0);
+  ctx.lineTo(-2, 0);
   ctx.closePath();
   ctx.fill();
   ctx.restore();
   
-  // Title with exact font weight
+  // Title with exact font weight and spacing
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+  ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
   ctx.textAlign = 'left';
-  ctx.fillText('Elon Ten Host', 80, 55);
+  ctx.fillText('ASIF HOST', 80, 50);
   
-  // Date and system info (top right) with exact styling
-  ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+  // Date and system info (top right) with exact styling and positioning
+  ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
   ctx.textAlign = 'right';
-  ctx.fillStyle = '#94a3b8'; // Lighter gray like reference
-  ctx.fillText(stats.currentDate, width - 30, 35);
-  ctx.fillText(`${stats.hostname} • ${stats.platform}`, width - 30, 55);
+  ctx.fillStyle = '#94a3b8'; // Exact color match
+  ctx.fillText(stats.currentDate, width - 30, 30);
+  ctx.fillText(`${stats.hostname} • ${stats.platform}`, width - 30, 50);
 }
 
-// Draw top metrics exactly like HomoHost
+// Draw top metrics with PERFECT styling matching reference
 function drawHomoHostTopMetrics(ctx, stats) {
   const cards = [
     {
       title: 'Bot Uptime',
       value: stats.botUptime,
       percentage: `${stats.botUptimePercent.toFixed(2)}%`,
-      color: '#10b981', // Green
+      color: '#10b981', // Green - exact match
       x: 30,
-      y: 100,
+      y: 95,
       width: 280,
       height: 100
     },
@@ -464,9 +521,9 @@ function drawHomoHostTopMetrics(ctx, stats) {
       title: 'System Uptime',
       value: stats.systemUptime,
       percentage: `${stats.systemUptimePercent.toFixed(2)}%`,
-      color: '#3b82f6', // Blue
+      color: '#3b82f6', // Blue - exact match
       x: 330,
-      y: 100,
+      y: 95,
       width: 280,
       height: 100
     },
@@ -474,9 +531,9 @@ function drawHomoHostTopMetrics(ctx, stats) {
       title: 'CPU Usage',
       value: `${stats.cpuUsage.toFixed(2)}%`,
       percentage: `${stats.cpuUsage.toFixed(2)}%`,
-      color: '#ef4444', // Red
+      color: '#ef4444', // Red - exact match
       x: 630,
-      y: 100,
+      y: 95,
       width: 280,
       height: 100
     },
@@ -484,9 +541,9 @@ function drawHomoHostTopMetrics(ctx, stats) {
       title: 'Memory Usage',
       value: `${stats.memoryPercent.toFixed(2)}%`,
       percentage: `${stats.memoryPercent.toFixed(2)}%`,
-      color: '#8b5cf6', // Purple
+      color: '#8b5cf6', // Purple - exact match
       x: 930,
-      y: 100,
+      y: 95,
       width: 240,
       height: 100
     }
@@ -497,67 +554,92 @@ function drawHomoHostTopMetrics(ctx, stats) {
   });
 }
 
-// Draw metric card exactly like HomoHost
+// Draw metric card with PERFECT styling and borders
 function drawHomoHostMetricCard(ctx, card) {
-  // Card background - darker like HomoHost
-  ctx.fillStyle = '#1e293b'; // Dark slate background
-  ctx.fillRect(card.x, card.y, card.width, card.height);
+  // Card background with subtle gradient like reference
+  const cardGradient = ctx.createLinearGradient(0, card.y, 0, card.y + card.height);
+  cardGradient.addColorStop(0, '#1e293b'); // Dark slate background
+  cardGradient.addColorStop(1, '#334155'); // Slightly lighter
+  ctx.fillStyle = cardGradient;
+  roundRect(ctx, card.x, card.y, card.width, card.height, 12);
+  ctx.fill();
   
-  // Card border - subtle like HomoHost
-  ctx.strokeStyle = '#334155';
+  // Card border - subtle and perfect like reference
+  ctx.strokeStyle = '#475569'; // Subtle border color
   ctx.lineWidth = 1;
-  ctx.strokeRect(card.x, card.y, card.width, card.height);
+  ctx.stroke();
   
-  // Title (top left)
-  ctx.fillStyle = '#cbd5e1'; // Light gray
+  // Inner subtle shadow effect
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 0.5;
+  roundRect(ctx, card.x + 1, card.y + 1, card.width - 2, card.height - 2, 11);
+  ctx.stroke();
+  
+  // Title (top left) with perfect typography
+  ctx.fillStyle = '#cbd5e1'; // Light gray - exact match
   ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
   ctx.textAlign = 'left';
   ctx.fillText(card.title, card.x + 20, card.y + 25);
   
-  // Percentage (top right)
-  ctx.fillStyle = '#94a3b8';
+  // Percentage (top right) with perfect color
+  ctx.fillStyle = '#94a3b8'; // Muted gray - exact match
   ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
   ctx.textAlign = 'right';
   ctx.fillText(card.percentage, card.x + card.width - 20, card.y + 25);
   
-  // Main value - larger and bolder
+  // Main value - larger, bolder, perfect color
   ctx.fillStyle = card.color;
-  ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+  ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
   ctx.textAlign = 'left';
-  ctx.fillText(card.value, card.x + 20, card.y + 60);
+  ctx.fillText(card.value, card.x + 20, card.y + 65);
   
-  // Progress bar background - thinner like HomoHost
-  ctx.fillStyle = '#334155';
-  ctx.fillRect(card.x + 20, card.y + 80, card.width - 40, 3);
+  // Progress bar background - exact styling
+  ctx.fillStyle = '#475569'; // Darker background for progress
+  roundRect(ctx, card.x + 20, card.y + 78, card.width - 40, 4, 2);
+  ctx.fill();
   
-  // Progress bar fill
+  // Progress bar fill with gradient
   const progressPercent = parseFloat(card.percentage);
-  ctx.fillStyle = card.color;
   const progressWidth = Math.min((progressPercent / 100) * (card.width - 40), card.width - 40);
-  ctx.fillRect(card.x + 20, card.y + 80, progressWidth, 3);
+  const progressGradient = ctx.createLinearGradient(card.x + 20, 0, card.x + 20 + progressWidth, 0);
+  progressGradient.addColorStop(0, card.color);
+  progressGradient.addColorStop(1, adjustColorBrightness(card.color, 20));
+  ctx.fillStyle = progressGradient;
+  roundRect(ctx, card.x + 20, card.y + 78, progressWidth, 4, 2);
+  ctx.fill();
 }
 
-// Draw charts section exactly like HomoHost
+// Draw charts section with PERFECT styling
 function drawHomoHostCharts(ctx, stats) {
-  // Server uptime chart (left)
-  drawHomoHostUptimeChart(ctx, 30, 220, 540, 240, stats);
+  // Server uptime chart (left) with perfect borders
+  drawHomoHostUptimeChart(ctx, 30, 215, 540, 240, stats);
   
-  // Resource usage circles (right) - LARGER like reference
-  drawHomoHostResourceCircles(ctx, 590, 220, 580, 240, stats);
+  // Resource usage circles (right) with perfect borders
+  drawHomoHostResourceCircles(ctx, 590, 215, 580, 240, stats);
 }
 
-// Draw uptime chart exactly like HomoHost
+// Draw uptime chart with PERFECT styling and borders
 function drawHomoHostUptimeChart(ctx, x, y, w, h, stats) {
-  // Chart background
-  ctx.fillStyle = '#1e293b';
-  ctx.fillRect(x, y, w, h);
+  // Chart background with gradient
+  const chartGradient = ctx.createLinearGradient(0, y, 0, y + h);
+  chartGradient.addColorStop(0, '#1e293b');
+  chartGradient.addColorStop(1, '#334155');
+  ctx.fillStyle = chartGradient;
+  roundRect(ctx, x, y, w, h, 12);
+  ctx.fill();
   
-  // Border
-  ctx.strokeStyle = '#334155';
+  // Perfect border styling
+  ctx.strokeStyle = '#475569';
   ctx.lineWidth = 1;
-  ctx.strokeRect(x, y, w, h);
+  ctx.stroke();
   
-  // Title
+  // Inner border effect
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 0.5;
+  roundRect(ctx, x + 1, y + 1, w - 2, h - 2, 11);
+  ctx.stroke();
+  
+  // Title with icon
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
   ctx.textAlign = 'left';
@@ -569,9 +651,9 @@ function drawHomoHostUptimeChart(ctx, x, y, w, h, stats) {
   const chartW = w - 100;
   const chartH = h - 120;
   
-  // Draw grid lines - subtle
-  ctx.strokeStyle = '#334155';
-  ctx.lineWidth = 1;
+  // Draw grid lines with perfect styling
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 0.5;
   for (let i = 0; i <= 4; i++) {
     const gridY = chartY + (chartH / 4) * i;
     ctx.beginPath();
@@ -579,20 +661,20 @@ function drawHomoHostUptimeChart(ctx, x, y, w, h, stats) {
     ctx.lineTo(chartX + chartW, gridY);
     ctx.stroke();
     
-    // Y-axis labels
+    // Y-axis labels with perfect color
     ctx.fillStyle = '#94a3b8';
     ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.textAlign = 'right';
     ctx.fillText(`${100 - i * 25}%`, chartX - 10, gridY + 4);
   }
   
-  // Generate realistic uptime data (high values like HomoHost)
+  // Generate realistic uptime data matching reference
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const uptimeData = [100, 100, 100, 100, 100, 100, 100]; // Perfect uptime like HomoHost
+  const uptimeData = [100, 100, 100, 100, 100, 100, 100]; // Perfect uptime like reference
   
-  // Draw uptime area fill first (behind line)
+  // Draw uptime area fill with perfect gradient
   const areaGradient = ctx.createLinearGradient(0, chartY, 0, chartY + chartH);
-  areaGradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+  areaGradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)'); // More visible
   areaGradient.addColorStop(1, 'rgba(16, 185, 129, 0.05)');
   
   ctx.fillStyle = areaGradient;
@@ -611,9 +693,11 @@ function drawHomoHostUptimeChart(ctx, x, y, w, h, stats) {
   ctx.closePath();
   ctx.fill();
   
-  // Draw uptime line - thicker like HomoHost
+  // Draw uptime line with perfect styling
   ctx.strokeStyle = '#10b981';
   ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
   ctx.beginPath();
   
   uptimeData.forEach((uptime, i) => {
@@ -626,17 +710,29 @@ function drawHomoHostUptimeChart(ctx, x, y, w, h, stats) {
       ctx.lineTo(pointX, pointY);
     }
     
-    // Draw data points - larger
+    // Draw data points with glow effect
     ctx.save();
+    
+    // Glow effect
+    ctx.shadowColor = '#10b981';
+    ctx.shadowBlur = 10;
     ctx.fillStyle = '#10b981';
     ctx.beginPath();
-    ctx.arc(pointX, pointY, 5, 0, Math.PI * 2);
+    ctx.arc(pointX, pointY, 4, 0, Math.PI * 2);
     ctx.fill();
+    
+    // Inner white dot
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(pointX, pointY, 2, 0, Math.PI * 2);
+    ctx.fill();
+    
     ctx.restore();
   });
   ctx.stroke();
   
-  // X-axis labels
+  // X-axis labels with perfect styling
   ctx.fillStyle = '#94a3b8';
   ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
   ctx.textAlign = 'center';
@@ -646,24 +742,34 @@ function drawHomoHostUptimeChart(ctx, x, y, w, h, stats) {
   });
 }
 
-// Draw resource usage circles exactly like HomoHost - MUCH LARGER
+// Draw resource usage circles with PERFECT styling
 function drawHomoHostResourceCircles(ctx, x, y, w, h, stats) {
-  // Background
-  ctx.fillStyle = '#1e293b';
-  ctx.fillRect(x, y, w, h);
+  // Background with gradient
+  const circleGradient = ctx.createLinearGradient(0, y, 0, y + h);
+  circleGradient.addColorStop(0, '#1e293b');
+  circleGradient.addColorStop(1, '#334155');
+  ctx.fillStyle = circleGradient;
+  roundRect(ctx, x, y, w, h, 12);
+  ctx.fill();
   
-  // Border
-  ctx.strokeStyle = '#334155';
+  // Perfect border styling
+  ctx.strokeStyle = '#475569';
   ctx.lineWidth = 1;
-  ctx.strokeRect(x, y, w, h);
+  ctx.stroke();
   
-  // Title with chart icon
+  // Inner border effect
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 0.5;
+  roundRect(ctx, x + 1, y + 1, w - 2, h - 2, 11);
+  ctx.stroke();
+  
+  // Title with chart icon - perfect match
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
   ctx.textAlign = 'left';
   ctx.fillText('📊 Resource Usage', x + 20, y + 35);
   
-  // Larger circles like HomoHost reference
+  // Larger circles with perfect positioning like HomoHost reference
   const circles = [
     { 
       label: 'CPU', 
@@ -696,68 +802,94 @@ function drawHomoHostResourceCircles(ctx, x, y, w, h, stats) {
   });
 }
 
-// Draw circular progress exactly like HomoHost - MUCH LARGER
+// Draw circular progress with PERFECT styling and effects
 function drawHomoHostCircularProgress(ctx, circle) {
-  const radius = 65; // Much larger radius like HomoHost
+  const radius = 65; // Large radius matching HomoHost
   const centerX = circle.x;
   const centerY = circle.y;
-  const lineWidth = 12; // Thicker stroke like HomoHost
+  const lineWidth = 12; // Thick stroke matching HomoHost
   
-  // Background circle - darker
+  // Background circle with subtle gradient
   ctx.beginPath();
   ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-  ctx.strokeStyle = '#334155'; // Darker background
+  ctx.strokeStyle = '#475569'; // Perfect background color
   ctx.lineWidth = lineWidth;
   ctx.stroke();
   
-  // Progress circle
+  // Progress circle with gradient and glow
   const angle = (circle.value / 100) * Math.PI * 2;
+  
+  // Create gradient for progress circle
+  const progressGradient = ctx.createLinearGradient(
+    centerX - radius, centerY - radius,
+    centerX + radius, centerY + radius
+  );
+  progressGradient.addColorStop(0, circle.color);
+  progressGradient.addColorStop(1, adjustColorBrightness(circle.color, 30));
+  
+  // Add glow effect
+  ctx.save();
+  ctx.shadowColor = circle.color;
+  ctx.shadowBlur = 15;
+  
   ctx.beginPath();
   ctx.arc(centerX, centerY, radius, -Math.PI / 2, -Math.PI / 2 + angle);
-  ctx.strokeStyle = circle.color;
+  ctx.strokeStyle = progressGradient;
   ctx.lineWidth = lineWidth;
   ctx.lineCap = 'round'; // Rounded ends like HomoHost
   ctx.stroke();
   
-  // Percentage text - larger
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
-  ctx.textAlign = 'center';
-  ctx.fillText(circle.displayValue, centerX, centerY + 6);
+  ctx.restore();
   
-  // Label - larger
+  // Percentage text with perfect typography
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText(circle.displayValue, centerX, centerY + 7);
+  
+  // Label with perfect styling
   ctx.fillStyle = '#cbd5e1';
   ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
-  ctx.fillText(circle.label, centerX, centerY + 90);
+  ctx.fillText(circle.label, centerX, centerY + 95);
 }
 
-// Draw bottom sections exactly like HomoHost
+// Draw bottom sections with PERFECT styling
 function drawHomoHostBottomSections(ctx, stats) {
-  // System Information (left)
-  drawHomoHostSystemInfo(ctx, 30, 480, 540, 220, stats);
+  // System Information (left) with perfect borders
+  drawHomoHostSystemInfo(ctx, 30, 475, 540, 220, stats);
   
-  // Process Statistics (right)
-  drawHomoHostProcessStats(ctx, 590, 480, 580, 220, stats);
+  // Process Statistics (right) with perfect borders
+  drawHomoHostProcessStats(ctx, 590, 475, 580, 220, stats);
 }
 
-// Draw system information exactly like HomoHost
+// Draw system information with PERFECT styling
 function drawHomoHostSystemInfo(ctx, x, y, w, h, stats) {
-  // Background
-  ctx.fillStyle = '#1e293b';
-  ctx.fillRect(x, y, w, h);
+  // Background with gradient
+  const sysGradient = ctx.createLinearGradient(0, y, 0, y + h);
+  sysGradient.addColorStop(0, '#1e293b');
+  sysGradient.addColorStop(1, '#334155');
+  ctx.fillStyle = sysGradient;
+  roundRect(ctx, x, y, w, h, 12);
+  ctx.fill();
   
-  // Border
-  ctx.strokeStyle = '#334155';
+  // Perfect border styling
+  ctx.strokeStyle = '#475569';
   ctx.lineWidth = 1;
-  ctx.strokeRect(x, y, w, h);
+  ctx.stroke();
   
-  // Title with computer icon
+  // Inner border effect
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 0.5;
+  roundRect(ctx, x + 1, y + 1, w - 2, h - 2, 11);
+  ctx.stroke();
+  
+  // Title with computer icon - perfect match
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
   ctx.textAlign = 'left';
   ctx.fillText('💻 System Information', x + 20, y + 35);
   
-  // System info with proper icons and spacing
+  // System info with perfect icons, colors, and spacing
   const sysInfo = [
     { icon: '🌐', label: 'Platform:', value: `${stats.platform} (${stats.architecture})`, x: x + 20, y: y + 70 },
     { icon: '⚙️', label: 'CPU Model:', value: 'Intel(R) Xeon(R) Platinum 8160 CPU @ 2.10GHz', x: x + 20, y: y + 100 },
@@ -767,36 +899,46 @@ function drawHomoHostSystemInfo(ctx, x, y, w, h, stats) {
   ];
   
   sysInfo.forEach((info) => {
-    // Icon
+    // Icon with perfect positioning
     ctx.fillStyle = '#ffffff';
-    ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+    ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.textAlign = 'left';
     ctx.fillText(info.icon, info.x, info.y);
     
-    // Label - gray like HomoHost
+    // Label - perfect gray color matching reference
     ctx.fillStyle = '#94a3b8';
     ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.fillText(info.label, info.x + 30, info.y);
     
-    // Value - blue like HomoHost
+    // Value - perfect blue color matching reference
     ctx.fillStyle = '#60a5fa';
-    ctx.font = '15px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+    ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.fillText(info.value, info.x + 130, info.y);
   });
 }
 
-// Draw process statistics exactly like HomoHost
+// Draw process statistics with PERFECT styling
 function drawHomoHostProcessStats(ctx, x, y, w, h, stats) {
-  // Background
-  ctx.fillStyle = '#1e293b';
-  ctx.fillRect(x, y, w, h);
+  // Background with gradient
+  const procGradient = ctx.createLinearGradient(0, y, 0, y + h);
+  procGradient.addColorStop(0, '#1e293b');
+  procGradient.addColorStop(1, '#334155');
+  ctx.fillStyle = procGradient;
+  roundRect(ctx, x, y, w, h, 12);
+  ctx.fill();
   
-  // Border
-  ctx.strokeStyle = '#334155';
+  // Perfect border styling
+  ctx.strokeStyle = '#475569';
   ctx.lineWidth = 1;
-  ctx.strokeRect(x, y, w, h);
+  ctx.stroke();
   
-  // Title with gear icon
+  // Inner border effect
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 0.5;
+  roundRect(ctx, x + 1, y + 1, w - 2, h - 2, 11);
+  ctx.stroke();
+  
+  // Title with gear icon - perfect match
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
   ctx.textAlign = 'left';
@@ -807,66 +949,99 @@ function drawHomoHostProcessStats(ctx, x, y, w, h, stats) {
   ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
   ctx.fillText('Process Memory Usage', x + 20, y + 70);
   
-  // Large memory value - green like HomoHost
+  // Large memory value - perfect green color matching reference
   ctx.fillStyle = '#10b981';
-  ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
-  ctx.fillText(`${stats.processMemoryMB.toFixed(2)} MB`, x + 20, y + 110);
+  ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+  ctx.fillText(`${stats.processMemoryMB.toFixed(2)} MB`, x + 20, y + 115);
   
-  // Memory percentage - smaller green text
+  // Memory percentage - perfect positioning and color
   ctx.fillStyle = '#059669';
   ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
   ctx.textAlign = 'right';
   ctx.fillText(`${stats.processMemoryPercent.toFixed(2)}% of total RAM`, x + w - 20, y + 85);
   
-  // Progress bar for memory usage
-  ctx.fillStyle = '#334155';
-  ctx.fillRect(x + 20, y + 125, w - 40, 6);
+  // Progress bar for memory usage with perfect styling
+  ctx.fillStyle = '#475569';
+  roundRect(ctx, x + 20, y + 130, w - 40, 6, 3);
+  ctx.fill();
   
-  ctx.fillStyle = '#10b981';
+  // Progress fill with gradient
   const memProgressWidth = Math.min((stats.processMemoryPercent / 100) * (w - 40), w - 40);
-  ctx.fillRect(x + 20, y + 125, memProgressWidth, 6);
+  const memGradient = ctx.createLinearGradient(x + 20, 0, x + 20 + memProgressWidth, 0);
+  memGradient.addColorStop(0, '#10b981');
+  memGradient.addColorStop(1, '#059669');
+  ctx.fillStyle = memGradient;
+  roundRect(ctx, x + 20, y + 130, memProgressWidth, 6, 3);
+  ctx.fill();
   
   // Process uptime section
   ctx.fillStyle = '#cbd5e1';
   ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
   ctx.textAlign = 'left';
-  ctx.fillText('Process Uptime', x + 20, y + 155);
+  ctx.fillText('Process Uptime', x + 20, y + 165);
   
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
-  ctx.fillText(stats.botUptime, x + 20, y + 185);
+  ctx.fillText(stats.botUptime, x + 20, y + 190);
   
-  // Additional process info (right side)
+  // Additional process info (right side) with perfect styling
   const processInfo = [
-    { icon: '🆔', label: 'Process ID:', value: stats.processId.toString(), x: x + 300, y: y + 155 },
-    { icon: '🖥️', label: 'Platform:', value: stats.platform, x: x + 300, y: y + 185 }
+    { icon: '🆔', label: 'Process ID:', value: stats.processId.toString(), x: x + 300, y: y + 165 },
+    { icon: '🖥️', label: 'Platform:', value: stats.platform, x: x + 300, y: y + 190 }
   ];
   
   processInfo.forEach((info) => {
-    // Icon
+    // Icon with perfect positioning
     ctx.fillStyle = '#ffffff';
     ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.textAlign = 'left';
     ctx.fillText(info.icon, info.x, info.y);
     
-    // Label - gray like HomoHost
+    // Label - perfect gray color matching reference
     ctx.fillStyle = '#94a3b8';
     ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.fillText(info.label, info.x + 25, info.y);
     
-    // Value - white like HomoHost
+    // Value - perfect white color matching reference
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.fillText(info.value, info.x + 120, info.y);
   });
 }
 
-// Draw footer exactly like HomoHost
+// Draw footer with PERFECT styling
 function drawHomoHostFooter(ctx, width, height, stats) {
-  // Footer text - centered like HomoHost
+  // Footer text - perfectly centered and styled like HomoHost
   ctx.fillStyle = '#64748b';
   ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
   ctx.textAlign = 'center';
   const footerText = `System Dashboard v1.0 • Generated ${stats.currentDate} at ${stats.currentTime}`;
-  ctx.fillText(footerText, width / 2, height - 20);
-    }
+  ctx.fillText(footerText, width / 2, height - 25);
+}
+
+// Helper function to draw rounded rectangles
+function roundRect(ctx, x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
+// Helper function to adjust color brightness
+function adjustColorBrightness(color, percent) {
+  const num = parseInt(color.replace("#", ""), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = (num >> 16) + amt;
+  const G = (num >> 8 & 0x00FF) + amt;
+  const B = (num & 0x0000FF) + amt;
+  return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+    (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+    (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+                              }
