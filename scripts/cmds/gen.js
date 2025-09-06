@@ -1,36 +1,62 @@
-const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+const fetch = require("node-fetch");
+const { randomUUID } = require("crypto");
 
 module.exports = {
   config: {
     name: "gen",
-    aliases: ["imagegen", "aiimage"],
-    version: "1.0",
-    author: "Eren",
-    countDown: 5,
-    role: 0,
-    shortDescription: { en: "Generate AI image" },
-    longDescription: { en: "Generate AI image from prompt (direct stream)" },
-    category: "ai",
-    guide: { en: "{pn} [prompt]" }
+    version: "1.3",
+    author: "UPoL Zox",
+    shortDescription: "Generate an image using picedit.top API",
+    guide: "{p}{n} <prompt>"
   },
 
-  onStart: async function ({ message, args }) {
-    const prompt = args.join(" ");
-    if (!prompt)
-      return message.reply("❌ Please provide a prompt.\nExample: gen neko girl in rain");
-
-    const url = `https://sivexis-mahi.vercel.app/api/poli?prompt=${encodeURIComponent(prompt)}`;
-
+  onStart: async function ({ args, message }) {
     try {
-      const response = await axios.get(url, { responseType: "stream" });
+      const prompt = args.join(" ").trim();
+      if (!prompt) return message.reply("âš ï¸ Please provide a prompt for the image.");
 
-      return message.reply({
-        body: `🖼️ Prompt: ${prompt}`,
-        attachment: response.data
+      const waiting = await message.reply(`ðŸŽ¨ Generating image...`);
+
+      
+      const response = await fetch("https://www.picedit.top/api/image", {
+        method: "POST",
+        headers: {
+          "accept": "*/*",
+          "content-type": "application/json",
+          "origin": "https://www.picedit.top",
+          "referer": "https://www.picedit.top/",
+          "user-agent": "Mozilla/5.0"
+        },
+        body: JSON.stringify({ prompt, image: null })
       });
+
+      if (!response.ok) {
+        message.reply(`HTTP ${response.status} - ${await response.text()}`);
+      }
+
+      const data = await response.json();
+      if (!data.image) message.reply("No image returned from API");
+
+      const base64Data = data.image.split(",")[1];
+      const imgBuffer = Buffer.from(base64Data, "base64");
+      const filePath = path.join(os.tmpdir(), `picedit_${randomUUID()}.png`);
+      fs.writeFileSync(filePath, imgBuffer);
+
+      try { await message.unsend(waiting.messageID); } catch {}
+
+      await message.reply({
+        body: `âœ¨ Here is your image:`,
+        attachment: fs.createReadStream(filePath)
+      });
+
+      fs.unlinkSync(filePath);
+
     } catch (err) {
-      console.error(err);
-      return message.reply("❌ Error: Couldn't generate image from API.");
+      console.error("PicEdit error:", err);
+      return message.reply("âŒ Failed to generate image. Please try again later.");
     }
   }
 };
