@@ -8,8 +8,8 @@ const { execSync } = require('child_process');
 
 module.exports = {
   config: {
-    name: 'system',
-    aliases: ['ut', 'db', 'stats'],
+    name: 'dashboard',
+    aliases: ['db', 'sys', 'stats'],
     version: '3.2',
     author: 'TawsiN',
     role: 1,
@@ -95,7 +95,7 @@ module.exports = {
       ctx.textRenderingOptimization = 'optimizeQuality';
       
       // Draw dashboard matching the reference exactly
-      await drawElonHostDashboard(ctx, width, height, {
+      await drawHomoHostDashboard(ctx, width, height, {
         botUptime,
         botUptimePercent,
         systemUptime,
@@ -191,7 +191,7 @@ module.exports = {
     } catch (err) {
       console.error('Dashboard generation error:', err);
       return api.sendMessage(
-        '❌ An error occurred while generating the ElonHost system dashboard. Please try again later.',
+        '❌ An error occurred while generating the HomoHost system dashboard. Please try again later.',
         event.threadID
       );
     }
@@ -390,9 +390,9 @@ function getPlatformName(platform) {
   return platforms[platform] || platform;
 }
 
-// Main dashboard drawing function - EXACT match to ElonHost reference
+// Main dashboard drawing function - EXACT match to HomoHost reference
 async function drawHomoHostDashboard(ctx, width, height, stats) {
-  // Dark background exactly like ElonHost
+  // Dark background exactly like HomoHost
   const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
   bgGradient.addColorStop(0, '#0f172a'); // Very dark slate
   bgGradient.addColorStop(1, '#1e293b'); // Darker slate
@@ -415,8 +415,8 @@ async function drawHomoHostDashboard(ctx, width, height, stats) {
   drawHomoHostFooter(ctx, width, height, stats);
 }
 
-// Draw header exactly like ElonHost
-function drawElonHostHeader(ctx, width, stats) {
+// Draw header exactly like HomoHost
+function drawHomoHostHeader(ctx, width, stats) {
   // Lightning bolt icon (blue like reference)
   ctx.fillStyle = '#3b82f6';
   ctx.save();
@@ -447,7 +447,7 @@ function drawElonHostHeader(ctx, width, stats) {
   ctx.fillText(`${stats.hostname} • ${stats.platform}`, width - 30, 55);
 }
 
-// Draw top metrics exactly like ElonHost
+// Draw top metrics exactly like HomoHost
 function drawHomoHostTopMetrics(ctx, stats) {
   const cards = [
     {
@@ -497,13 +497,13 @@ function drawHomoHostTopMetrics(ctx, stats) {
   });
 }
 
-// Draw metric card exactly like ElonHost
+// Draw metric card exactly like HomoHost
 function drawHomoHostMetricCard(ctx, card) {
-  // Card background - darker like ElonHost
+  // Card background - darker like HomoHost
   ctx.fillStyle = '#1e293b'; // Dark slate background
   ctx.fillRect(card.x, card.y, card.width, card.height);
   
-  // Card border - subtle like ElonHost
+  // Card border - subtle like HomoHost
   ctx.strokeStyle = '#334155';
   ctx.lineWidth = 1;
   ctx.strokeRect(card.x, card.y, card.width, card.height);
@@ -537,16 +537,16 @@ function drawHomoHostMetricCard(ctx, card) {
   ctx.fillRect(card.x + 20, card.y + 80, progressWidth, 3);
 }
 
-// Draw charts section exactly like ElonHost
+// Draw charts section exactly like HomoHost
 function drawHomoHostCharts(ctx, stats) {
   // Server uptime chart (left)
   drawHomoHostUptimeChart(ctx, 30, 220, 540, 240, stats);
   
   // Resource usage circles (right) - LARGER like reference
-  drawElonHostResourceCircles(ctx, 590, 220, 580, 240, stats);
+  drawHomoHostResourceCircles(ctx, 590, 220, 580, 240, stats);
 }
 
-// Draw uptime chart exactly like ElonHost
+// Draw uptime chart exactly like HomoHost
 function drawHomoHostUptimeChart(ctx, x, y, w, h, stats) {
   // Chart background
   ctx.fillStyle = '#1e293b';
@@ -611,7 +611,7 @@ function drawHomoHostUptimeChart(ctx, x, y, w, h, stats) {
   ctx.closePath();
   ctx.fill();
   
-  // Draw uptime line - thicker like ElonHost
+  // Draw uptime line - thicker like HomoHost
   ctx.strokeStyle = '#10b981';
   ctx.lineWidth = 3;
   ctx.beginPath();
@@ -647,7 +647,7 @@ function drawHomoHostUptimeChart(ctx, x, y, w, h, stats) {
 }
 
 // Draw resource usage circles exactly like HomoHost - MUCH LARGER
-function drawElonHostResourceCircles(ctx, x, y, w, h, stats) {
+function drawHomoHostResourceCircles(ctx, x, y, w, h, stats) {
   // Background
   ctx.fillStyle = '#1e293b';
   ctx.fillRect(x, y, w, h);
@@ -663,7 +663,7 @@ function drawElonHostResourceCircles(ctx, x, y, w, h, stats) {
   ctx.textAlign = 'left';
   ctx.fillText('📊 Resource Usage', x + 20, y + 35);
   
-  // Larger circles like ElonHost reference
+  // Larger circles like HomoHost reference
   const circles = [
     { 
       label: 'CPU', 
@@ -692,16 +692,16 @@ function drawElonHostResourceCircles(ctx, x, y, w, h, stats) {
   ];
   
   circles.forEach(circle => {
-    drawElonHostCircularProgress(ctx, circle);
+    drawHomoHostCircularProgress(ctx, circle);
   });
 }
 
-// Draw circular progress exactly like ElonHost - MUCH LARGER
-function drawElonHostCircularProgress(ctx, circle) {
+// Draw circular progress exactly like HomoHost - MUCH LARGER
+function drawHomoHostCircularProgress(ctx, circle) {
   const radius = 65; // Much larger radius like HomoHost
   const centerX = circle.x;
   const centerY = circle.y;
-  const lineWidth = 12; // Thicker stroke like ElonHost
+  const lineWidth = 12; // Thicker stroke like HomoHost
   
   // Background circle - darker
   ctx.beginPath();
@@ -731,16 +731,16 @@ function drawElonHostCircularProgress(ctx, circle) {
   ctx.fillText(circle.label, centerX, centerY + 90);
 }
 
-// Draw bottom sections exactly like ElonHost
+// Draw bottom sections exactly like HomoHost
 function drawHomoHostBottomSections(ctx, stats) {
   // System Information (left)
-  drawElonHostSystemInfo(ctx, 30, 480, 540, 220, stats);
+  drawHomoHostSystemInfo(ctx, 30, 480, 540, 220, stats);
   
   // Process Statistics (right)
   drawHomoHostProcessStats(ctx, 590, 480, 580, 220, stats);
 }
 
-// Draw system information exactly like ElonHost
+// Draw system information exactly like HomoHost
 function drawHomoHostSystemInfo(ctx, x, y, w, h, stats) {
   // Background
   ctx.fillStyle = '#1e293b';
@@ -769,16 +769,16 @@ function drawHomoHostSystemInfo(ctx, x, y, w, h, stats) {
   sysInfo.forEach((info) => {
     // Icon
     ctx.fillStyle = '#ffffff';
-    ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+    ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.textAlign = 'left';
     ctx.fillText(info.icon, info.x, info.y);
     
-    // Label - gray ElonHost
+    // Label - gray like HomoHost
     ctx.fillStyle = '#94a3b8';
     ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.fillText(info.label, info.x + 30, info.y);
     
-    // Value - blue like ElonHost
+    // Value - blue like HomoHost
     ctx.fillStyle = '#60a5fa';
     ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.fillText(info.value, info.x + 130, info.y);
@@ -828,7 +828,7 @@ function drawHomoHostProcessStats(ctx, x, y, w, h, stats) {
   
   // Process uptime section
   ctx.fillStyle = '#cbd5e1';
-  ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+  ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
   ctx.textAlign = 'left';
   ctx.fillText('Process Uptime', x + 20, y + 155);
   
@@ -869,4 +869,4 @@ function drawHomoHostFooter(ctx, width, height, stats) {
   ctx.textAlign = 'center';
   const footerText = `System Dashboard v1.0 • Generated ${stats.currentDate} at ${stats.currentTime}`;
   ctx.fillText(footerText, width / 2, height - 20);
-}px
+    }
