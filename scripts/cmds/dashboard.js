@@ -892,7 +892,7 @@ function drawHomoHostSystemInfo(ctx, x, y, w, h, stats) {
   // System info with perfect icons, colors, and spacing
   const sysInfo = [
     { icon: '🌐', label: 'Platform:', value: `${stats.platform} (${stats.architecture})`, x: x + 20, y: y + 70 },
-    { icon: '⚙️', label: 'CPU Model:', value: 'Intel(R) Xeon(R) Platinum 8160 CPU @ 2.10GHz', x: x + 20, y: y + 100 },
+    { icon: '⚙️', label: 'CPU Model:', value: 'Intel Xeon Processor (Icelake)', x: x + 20, y: y + 100 },
     { icon: '🔧', label: 'CPU Cores:', value: `${stats.cpuCores} cores`, x: x + 20, y: y + 130 },
     { icon: '💾', label: 'Total Ram:', value: `${stats.totalMemGB.toFixed(2)} GB`, x: x + 20, y: y + 160 },
     { icon: '🏷️', label: 'Hostname:', value: stats.hostname, x: x + 20, y: y + 190 }
@@ -907,7 +907,7 @@ function drawHomoHostSystemInfo(ctx, x, y, w, h, stats) {
     
     // Label - perfect gray color matching reference
     ctx.fillStyle = '#94a3b8';
-    ctx.font = '15px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+    ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.fillText(info.label, info.x + 30, info.y);
     
     // Value - perfect blue color matching reference
