@@ -775,7 +775,7 @@ function drawHomoHostSystemInfo(ctx, x, y, w, h, stats) {
     
     // Label - gray like HomoHost
     ctx.fillStyle = '#94a3b8';
-    ctx.font = '20px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+    ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.fillText(info.label, info.x + 30, info.y);
     
     // Value - blue like HomoHost
@@ -856,7 +856,7 @@ function drawHomoHostProcessStats(ctx, x, y, w, h, stats) {
     
     // Value - white like HomoHost
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
+    ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
     ctx.fillText(info.value, info.x + 120, info.y);
   });
 }
