@@ -1,84 +1,76 @@
 const axios = require("axios");
-const path = require("path");
-const fs = require("fs");
+const { getStreamFromURL } = global.utils;
 
 module.exports = {
- config: {
- name: "pinterest",
- aliases: ["pin"],
- version: "0.0.1",
- author: "ArYAN",
- role: 0,
- countDown: 20,
- longDescription: {
- en: "This command allows you to search for images on Pinterest based on a given query and fetch a specified number of images (1-100)."
- },
- category: "media",
- guide: {
- en: "{pn} <search query> <number of images>\nExample: {pn} cat - 10"
- }
- },
+  config: {
+    name: "pinterest",
+    aliases: ["Pinterest", "pin"],
+    version: "1.0",
+    author: "SiAM",
+    countDown: 5,
+    role: 0,
+    shortDescription: "Search Pinterest and return images",
+    longDescription: "Fetches images from Pinterest based on a search query",
+    category: "Image",
+    guide: {
+      en: "{pn} your query -- [count]\n\n" +
+          "Example: {pn} cute cats -- 10\n" +
+          "• Default count is 5 images\n" +
+          "• Maximum is 20 images"
+    }
+  },
 
- onStart: async function ({ api, event, args }) {
- try {
- const keySearch = args.join(" ");
- if (!keySearch.includes("-")) {
- return api.sendMessage(
- `Please enter the search query and number of images\n\nExample:\n{p}pin cat - 10.`,
- event.threadID,
- event.messageID
- );
- }
+  onStart: async function({ api, args, message, event }) {
+    try {
+      let count = 5;
+      const dashIndex = args.indexOf("--");
+      if (dashIndex !== -1 && args.length > dashIndex + 1) {
+        const n = parseInt(args[dashIndex + 1], 10);
+        if (!isNaN(n)) {
+          count = Math.min(n, 20);
+        }
+        args.splice(dashIndex, 2);
+      }
 
- const keySearchs = keySearch.substr(0, keySearch.indexOf('-')).trim();
- let numberSearch = parseInt(keySearch.split("-").pop()) || 6;
- if (numberSearch > 20) {
- numberSearch = 20;
- }
+      const query = args.join(" ").trim();
+      if (!query) {
+        return message.reply("Please provide a search query. Example: /Pinterest mountains -- 8");
+      }
 
- const apiUrl = `https://aryan-noobs-apis.onrender.com/pinterest?search=${encodeURIComponent(keySearchs)}&count=${numberSearch}`;
+    
+      const processingMessage = await message.reply("🔍 Fetching images from Pinterest...");
+      message.reaction("⏰", event.messageID);
 
- const res = await axios.get(apiUrl);
- const data = res.data.data;
- const imgData = [];
+   
+      const res = await axios.get(
+        `https://connect-foxapi.onrender.com/pinterest?search=${encodeURIComponent(query)}`
+      );
 
- const cacheDir = path.join(__dirname, "cache");
- if (!fs.existsSync(cacheDir)) {
- fs.mkdirSync(cacheDir);
- }
+      const links = Array.isArray(res.data.links) ? res.data.links : [];
+      const toSend = links.slice(0, count);
 
- for (let i = 0; i < Math.min(numberSearch, data.length); i++) {
- try {
- const imgResponse = await axios.get(data[i], {
- responseType: "arraybuffer",
- headers: {
- 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
- }
- });
- const imgPath = path.join(cacheDir, `${i + 1}.jpg`);
- await fs.promises.writeFile(imgPath, imgResponse.data, 'binary');
- imgData.push(fs.createReadStream(imgPath));
- } catch (error) {
- console.error(`Error downloading image ${data[i]}:`, error.message);
- }
- }
+      if (toSend.length === 0) {
+        await message.reply(`No images found for "${query}".`);
+      } else {
+        
+        const streams = await Promise.all(
+          toSend.map((url) => getStreamFromURL(url))
+        );
 
- await api.sendMessage({
- body: ``,
- attachment: imgData,
- }, event.threadID, event.messageID);
+        
+        await message.reply({
+          body: `Here are ${streams.length} images for "${query}":`,
+          attachment: streams
+        });
+      }
 
- if (fs.existsSync(cacheDir)) {
- await fs.promises.rm(cacheDir, { recursive: true });
- }
 
- } catch (error) {
- console.error(error);
- return api.sendMessage(
- `An error occurred: ${error.message}`,
- event.threadID,
- event.messageID
- );
- }
- }
+      await message.unsend(processingMessage.messageID);
+      await message.reaction("✅", event.messageID);
+
+    } catch (error) {
+      console.error(error);
+      message.reply("Err.\nServer has skil isu😾");
+    }
+  }
 };
