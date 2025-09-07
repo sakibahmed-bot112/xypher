@@ -494,7 +494,7 @@ function drawHomoHostHeader(ctx, width, stats) {
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
   ctx.textAlign = 'left';
-  ctx.fillText('ASIF HOST', 80, 50);
+  ctx.fillText('GORIB HOST', 80, 50);
   
   // Date and system info (top right) with exact styling and positioning
   ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui';
