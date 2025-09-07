@@ -1,78 +1,156 @@
-const a = require('axios');
-const b = require('valid-url');
-const c = require('fs');
-const d = require('path');
-const e = require('uuid').v4;
+const axios = require('axios');
+const validUrl = require('valid-url');
+const fs = require('fs');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 
-const f = "https://orochiai.vercel.app/chat";
-const g = "https://orochiai.vercel.app/chat/clear";
-const h = d.join(__dirname, 'tmp');
-if (!c.existsSync(h)) c.mkdirSync(h);
+const API_ENDPOINT = "https://shizuai.vercel.app/chat";
+const CLEAR_ENDPOINT = "https://shizuai.vercel.app/chat/clear";
+const TMP_DIR = path.join(__dirname, 'tmp');
 
-const i = async (j, k) => {
-  const l = d.join(h, `${e()}.${k}`);
-  const m = await a.get(j, { responseType: 'arraybuffer' });
-  c.writeFileSync(l, Buffer.from(m.data));
-  return l;
+if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR);
+
+const downloadFile = async (url, ext) => {
+  const filePath = path.join(TMP_DIR, `${uuidv4()}.${ext}`);
+  const response = await axios.get(url, { responseType: 'arraybuffer' });
+  fs.writeFileSync(filePath, Buffer.from(response.data));
+  return filePath;
 };
 
-const n = async (o, p, q) => {
-  o.setMessageReaction("♻️", p.messageID, () => {}, true);
+const resetConversation = async (api, event, message) => {
+  api.setMessageReaction("♻️", event.messageID, () => {}, true);
   try {
-    await a.delete(`${g}/${p.senderID}`);
-    return q.reply(`✅ Conversation reset for UID: ${p.senderID}`);
-  } catch (r) {
-    console.error('❌ Reset Error:', r.message);
-    return q.reply("❌ Reset failed. Try again.");
+    await axios.delete(`${CLEAR_ENDPOINT}/${event.senderID}`);
+    return message.reply(`✅ Conversation reset for UID: ${event.senderID}`);
+  } catch (error) {
+    console.error('❌ Reset Error:', error.message);
+    return message.reply("❌ Reset failed. Try again.");
   }
 };
 
-const s = async (t, u, v, w, x = false) => {
-  const y = u.senderID;
-  let z = v, A = null;
-  t.setMessageReaction("⏳", u.messageID, () => {}, true);
+const handleAIRequest = async (api, event, userInput, message, isReply = false) => {
+  const userId = event.senderID;
+  let messageContent = userInput;
+  let imageUrl = null;
 
-  if (u.messageReply) {
-    const B = u.messageReply;
-    if (B.senderID !== global.GoatBot?.botID && B.body) {
-      const C = B.body.length > 300 ? B.body.slice(0, 300) + "..." : B.body;
-      z += `\n\n📌 Reply:\n"${C}"`;
+  api.setMessageReaction("⏳", event.messageID, () => {}, true);
+
+  if (event.messageReply) {
+    const replyData = event.messageReply;
+    if (replyData.senderID !== global.GoatBot?.botID && replyData.body) {
+      const trimmedReply = replyData.body.length > 300
+        ? replyData.body.slice(0, 300) + "..."
+        : replyData.body;
+      messageContent += `\n\n📌 Reply:\n"${trimmedReply}"`;
     }
-    const D = B.attachments?.[0];
-    if (D?.type === 'photo') A = D.url;
+    const attachment = replyData.attachments?.[0];
+    if (attachment?.type === 'photo') imageUrl = attachment.url;
   }
 
-  const E = z.match(/(https?:\/\/[^\s]+)/)?.[0];
-  if (E && b.isWebUri(E)) {
-    A = E;
-    z = z.replace(E, '').trim();
+  const urlMatch = messageContent.match(/(https?:\/\/[^\s]+)/)?.[0];
+  if (urlMatch && validUrl.isWebUri(urlMatch)) {
+    imageUrl = urlMatch;
+    messageContent = messageContent.replace(urlMatch, '').trim();
   }
 
-  if (!z && !A) {
-    t.setMessageReaction("❌", u.messageID, () => {}, true);
-    return w.reply("💬 Provide a message or image.");
+  if (!messageContent && !imageUrl) {
+    api.setMessageReaction("❌", event.messageID, () => {}, true);
+    return message.reply("💬 Provide a message or image.");
   }
 
   try {
-    const F = await a.post(f, { uid: y, message: z, image_url: A }, { timeout: 45000 });
-    const { reply: G, image_url: H, music_data: I, shotti_data: J } = F.data;
-    let K = G || '✅ AI Response:', L = [];
+    const response = await axios.post(
+      API_ENDPOINT,
+      { uid: userId, message: messageContent, image_url: imageUrl },
+      { timeout: 60000 }
+    );
 
-    if (H) try { L.push(c.createReadStream(await i(H, 'jpg'))); } catch { K += '\n🖼️ Image failed.'; }
-    if (I?.downloadUrl) try { L.push(c.createReadStream(await i(I.downloadUrl, 'mp3'))); } catch { K += '\n🎵 Music failed.'; }
-    if (J?.videoUrl) try { L.push(c.createReadStream(await i(J.videoUrl, 'mp4'))); } catch { K += '\n🎬 Video failed.'; }
+    const {
+      reply: textReply,
+      image_url: genImageUrl,
+      music_data: musicData,
+      video_data: videoData,
+      shotti_data: shotiData,
+      lyrics_data: lyricsData
+    } = response.data;
 
-    const M = await w.reply({ body: K, attachment: L.length > 0 ? L : undefined });
-    global.GoatBot.onReply.set(M.messageID, { commandName: 'ai', messageID: M.messageID, author: y });
-    t.setMessageReaction("✅", u.messageID, () => {}, true);
-  } catch (N) {
-    console.error("❌ API Error:", N.response?.data || N.message);
-    t.setMessageReaction("❌", u.messageID, () => {}, true);
-    let O = "⚠️ AI Error:\n\n";
-    if (N.code === 'ECONNABORTED' || N.message.includes('timeout')) O += "⏱️ Timeout. Try again.";
-    else if (N.response?.status === 429) O += "🚦 Too many requests. Slow down.";
-    else O += "❌ Unexpected error.";
-    return w.reply(O);
+    let finalReply = textReply || '✅ AI Response:';
+    const attachments = [];
+
+    if (genImageUrl) {
+      try {
+        attachments.push(fs.createReadStream(await downloadFile(genImageUrl, 'jpg')));
+      } catch {
+        finalReply += '\n🖼️ Image download failed.';
+      }
+    }
+
+    if (musicData?.downloadUrl) {
+      try {
+        attachments.push(fs.createReadStream(await downloadFile(musicData.downloadUrl, 'mp3')));
+      } catch {
+        finalReply += '\n🎵 Music download failed.';
+      }
+    }
+
+    if (videoData?.downloadUrl) {
+      try {
+        attachments.push(fs.createReadStream(await downloadFile(videoData.downloadUrl, 'mp4')));
+      } catch {
+        finalReply += '\n🎬 Video download failed.';
+      }
+    }
+
+    if (shotiData?.videoUrl) {
+      try {
+        attachments.push(fs.createReadStream(await downloadFile(shotiData.videoUrl, 'mp4')));
+      } catch {
+        finalReply += '\n🎬 Shoti video download failed.';
+      }
+    }
+
+    if (lyricsData) {
+      try {
+        const maxLength = 1500;
+        let lyricsText = lyricsData.lyrics;
+        if (lyricsText.length > maxLength) {
+          lyricsText = lyricsText.substring(0, maxLength) + '... [truncated]';
+        }
+        finalReply += `\n\n🎵 Lyrics for "${lyricsData.track_name}":\n${lyricsText}`;
+      } catch {
+        finalReply += '\n📝 Lyrics processing failed.';
+      }
+    }
+
+    const sentMessage = await message.reply({
+      body: finalReply,
+      attachment: attachments.length > 0 ? attachments : undefined
+    });
+
+    if (sentMessage && sentMessage.messageID) {
+      global.GoatBot.onReply.set(sentMessage.messageID, {
+        commandName: 'ai',
+        messageID: sentMessage.messageID,
+        author: userId
+      });
+    }
+
+    api.setMessageReaction("✅", event.messageID, () => {}, true);
+
+  } catch (error) {
+    console.error("❌ API Error:", error.response?.data || error.message);
+    api.setMessageReaction("❌", event.messageID, () => {}, true);
+
+    let errorMessage = "⚠️ AI Error:\n\n";
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+      errorMessage += "⏱️ Timeout. Try again.";
+    } else if (error.response?.status === 429) {
+      errorMessage += "🚦 Too many requests. Slow down.";
+    } else {
+      errorMessage += "❌ Unexpected error: " + (error.message || 'No details');
+    }
+
+    return message.reply(errorMessage);
   }
 };
 
@@ -80,37 +158,54 @@ module.exports = {
   config: {
     name: 'ai',
     aliases: [],
-    version: '1.0.0',
+    version: '2.0.0',
     author: 'Aryan Chauhan',
     role: 0,
     category: 'ai',
-    longDescription: { en: 'AI chat, image gen, music/video, and reset' },
+    longDescription: {
+      en: 'Advanced AI with image gen, music/video, lyrics, and Shoti'
+    },
     guide: {
-      en: `
-.ai [your message]
-• 🤖 Chat, 🎨 Image, 🎵 Music, 🎬 Video
-• Reply to image/message for context
-• Reply or type "clear" to reset conversation
-      `
+      en: `.ai [your message]  
+• 🤖 Chat, 🎨 Image, 🎵 Music, 🎬 Video  
+• 🎵 Lyrics: "lyrics [song name]"  
+• 🎬 Shoti: "shoti" for random TikTok  
+• 🔄 Reply "clear" to reset conversation  
+• 💬 Works in chat: "ai [message]"`
     }
   },
 
-  onStart: async function ({ api: a, event: b, args: c, message: d }) {
-    const e = c.join(' ').trim();
-    if (!e) return d.reply("❗ Please enter a message.");
-    if (['clear', 'reset'].includes(e.toLowerCase())) return await n(a, b, d);
-    return await s(a, b, e, d);
+  onStart: async function ({ api, event, args, message }) {
+    const userInput = args.join(' ').trim();
+    if (!userInput) return message.reply("❗ Please enter a message.");
+    
+    if (['clear', 'reset'].includes(userInput.toLowerCase())) {
+      return await resetConversation(api, event, message);
+    }
+    
+    return await handleAIRequest(api, event, userInput, message);
   },
 
-  onReply: async function ({ api: a, event: b, Reply: c, message: d }) {
-    if (b.senderID !== c.author) return;
-    const e = b.body?.trim();
-    if (!e) return;
-    if (['clear', 'reset'].includes(e.toLowerCase())) return await n(a, b, d);
-    return await s(a, b, e, d, true);
+  onReply: async function ({ api, event, Reply, message }) {
+    if (event.senderID !== Reply.author) return;
+    
+    const userInput = event.body?.trim();
+    if (!userInput) return;
+    
+    if (['clear', 'reset'].includes(userInput.toLowerCase())) {
+      return await resetConversation(api, event, message);
+    }
+    
+    return await handleAIRequest(api, event, userInput, message, true);
   },
 
-  onChat: async function () {
-    // no-prefix command disabled intentionally
+  onChat: async function ({ api, event, message }) {
+    const body = event.body?.trim();
+    if (!body?.toLowerCase().startsWith('ai ')) return;
+    
+    const userInput = body.slice(3).trim();
+    if (!userInput) return;
+    
+    return await handleAIRequest(api, event, userInput, message);
   }
 };
