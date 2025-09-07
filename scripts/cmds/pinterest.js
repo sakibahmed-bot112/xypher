@@ -3,7 +3,7 @@ const { getStreamFromURL } = global.utils;
 
 module.exports = {
   config: {
-    name: "pinterest",
+    name: "pin",
     aliases: ["Pinterest", "pin"],
     version: "1.0",
     author: "SiAM",
