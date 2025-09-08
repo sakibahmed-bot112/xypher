@@ -12,7 +12,7 @@ module.exports = {
     role: 0,
     shortDescription: "Generate an image based on a prompt.",
     longDescription: "Generates an image using the provided prompt.",
-    category: "fun",
+    category: "Image Generation",
     guide: "{p}marjia <prompt>",
   },
   onStart: async function ({ message, args, api, event }) {
