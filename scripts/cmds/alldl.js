@@ -1,94 +1,64 @@
-const fs = require("fs-extra");
 const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
 
 module.exports = {
+  config: {
+    name: "alldl",
+    aliases: ["autodl"],
+    version: "1.6.9",
+    author: "Nazrul",
+    role: 0,
+    description: "Auto-download media from any  platform",
+    category: "media",
+    guide: { en: "Send any media link" }
+  },
 
-	threadStates: {},
+  onStart: async function({}) {},
 
-	config: {
-		name: 'autoinsta',
-		version: '1.0',
-		author: 'Kshitiz',
-		countDown: 5,
-		role: 0,
-		shortDescription: 'auto video downloader',
-		longDescription: '',
-		category: 'media',
-		guide: {
-			en: '{p}{n}',
-		}
-	},
-	onStart: async function ({ api, event }) {
-		const threadID = event.threadID;
+  onChat: async function({ api, event }) {
+    const url = event.body?.match(/https?:\/\/[^\s]+/)?.[0];
+    if (!url) return;
 
+    try {
+      api.setMessageReaction("🦆", event.messageID, () => {}, true);
 
-		if (!this.threadStates[threadID]) {
-			this.threadStates[threadID] = {
-				autoInstaEnabled: false,
-			};
-		}
+      const apiUrl = (await axios.get("https://raw.githubusercontent.com/nazrul4x/Noobs/main/Apis.json")).data.api;
+      const { data } = await axios.get(`${apiUrl}/nazrul/alldlxx?url=${encodeURIComponent(url)}`);
+      
+      if (!data.url) throw new Error(data.error || "No download link found");
 
+      const filePath = path.join(__dirname, `n_${Date.now()}.mp4`);
+      const writer = fs.createWriteStream(filePath);
+      const response = await axios({
+        url: data.url,
+        method: 'GET',
+        responseType: 'stream',
+        headers: {
+          'User-Agent': 'Mozilla/5.0',
+          'Accept': '*/*',
+          'Connection': 'keep-alive'
+        }
+      });
 
-		if (event.body.toLowerCase().includes('autoinsta')) {
+      response.data.pipe(writer);
 
-			if (event.body.toLowerCase().includes('on')) {
+      await new Promise((resolve, reject) => {
+        writer.on('finish', resolve);
+        writer.on('error', reject);
+      });
 
-				this.threadStates[threadID].autoInstaEnabled = true;
-				api.sendMessage("AutoInsta is now ON.", event.threadID, event.messageID);
-			} else if (event.body.toLowerCase().includes('off')) {
+      await api.sendMessage({
+        body: `${data.t}\n🛠️ Platform: ${data.p}`,
+        attachment: fs.createReadStream(filePath)
+      }, event.threadID);
 
-				this.threadStates[threadID].autoInstaEnabled = false;
-				api.sendMessage("AutoInsta is now OFF.", event.threadID, event.messageID);
-			} else {
+      fs.unlink(filePath, () => {});
+      api.setMessageReaction("✅", event.messageID, () => {}, true);
 
-				api.sendMessage("type 'autoinsta on' to turn on and\n'autoinsta off' to turn off.", event.threadID, event.messageID);
-			}
-		}
-	},
-	onChat: async function ({ api, event }) {
-		const threadID = event.threadID;
-
-
-		if (this.threadStates[threadID] && this.threadStates[threadID].autoInstaEnabled && this.checkLink(event.body)) {
-			var { url } = this.checkLink(event.body);
-			this.downLoad(url, api, event);
-			api.setMessageReaction("?", event.messageID, (err) => {}, true);
-		}
-	},
-	downLoad: function (url, api, event) {
-		var time = Date.now();
-		var path = __dirname + `/cache/${time}.mp4`;
-		this.getLink(url).then(res => {
-			axios({
-				method: "GET",
-				url: res,
-				responseType: "arraybuffer"
-			}).then(res => {
-				fs.writeFileSync(path, Buffer.from(res.data, "utf-8"));
-				if (fs.statSync(path).size / 1024 / 1024 > 25) {
-					return api.sendMessage("The file is too large, cannot be sent", event.threadID, () => fs.unlinkSync(path), event.messageID);
-				}
-				api.sendMessage({
-					body: "Successful Download!",
-					attachment: fs.createReadStream(path)
-				}, event.threadID, () => fs.unlinkSync(path), event.messageID);
-			}).catch(err => console.error(err));
-		}).catch(err => console.error(err));
-	},
-	getLink: function (url) {
-		return new Promise((resolve, reject) => {
-			axios({
-				method: "GET",
-				url: `https://for-devs.rishadapis.repl.co/api/instadl?url=${url}&apikey=fuck`
-			}).then(res => resolve(res.data.video)).catch(err => reject(err));
-		});
-	},
-	checkLink: function (url) {
-		if (url.includes("instagram")) {
-			return {
-				url: url
-			};
-		}
-		return null;
-	}
+    } catch (e) {
+      api.setMessageReaction("❌", event.messageID, () => {}, true);
+      console.log(e.message);
+    }
+  }
 };
