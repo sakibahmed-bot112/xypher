@@ -1,16 +1,16 @@
- const axios = require('axios');
+const axios = require('axios');
 
 module.exports = {
   config: {
     name: "pnx",
-    aliases: ["pnx"],
+    aliases: ["ah"],
     version: "1.0",
-    author: "RIFAT<EFAT",
+    author: "Badhon",
     countDown: 5,
-    role: 0,
+    role: 2,
     shortDescription: "get random waifu",
     longDescription: "Get waifu",
-    category: "anime",
+    category: "18+",
     guide: "{pn} {{<name>}}"
   },
 
@@ -25,7 +25,7 @@ module.exports = {
 
       
       const form = {
-        body: `   「 pnx 😘  」   ` // Custom message
+        body: `   「𝗨𝗳𝘀 𝗯𝗮𝗯𝘆 𝗮𝘀𝘁𝗲 🥵」   ` // Custom message
       };
 
     
