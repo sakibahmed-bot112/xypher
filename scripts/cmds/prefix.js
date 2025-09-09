@@ -37,7 +37,7 @@ module.exports = {
 │ 𝗣𝗥𝗘𝗙𝗜𝗫  𝗜𝗡𝗙𝗢  📍
 ├─❖
 │ 𝗦𝗬𝗦𝗧𝗘𝗠  𝗣𝗥𝗘𝗙𝗜𝗫 : [ ${systemPrefix} ]
-│ 𝗖𝗛𝗔𝗧 𝗣𝗥𝗥𝗙𝗜𝗫 : [ ${chatPrefix} ]
+│ 𝗖𝗛𝗔𝗧  𝗣𝗥𝗘𝗙𝗜𝗫 : [ ${chatPrefix} ]
 ├─❖
 │ 𝗕𝗢𝗧  𝗔𝗨𝗧𝗛𝗢𝗥 : ${author}
 │ 𝗗𝗔𝗧𝗘 : ${formattedDate}
