@@ -4,6 +4,17 @@ const path = require("path");
 const { getPrefix } = global.utils;
 const { commands, aliases } = global.GoatBot;
 
+// 🧠 Track current image index
+let currentImageIndex = 0;
+
+const helpListImages = [
+  "https://files.catbox.moe/0qrdic.webp",
+  "https://files.catbox.moe/sok16l.gif",
+  "https://files.catbox.moe/er07ay.webp",
+  "https://files.catbox.moe/fdtpzs.webp",
+  "https://files.catbox.moe/um8brf.webp"
+];
+
 module.exports = {
   config: {
     name: "help",
@@ -29,6 +40,10 @@ module.exports = {
     const prefix = getPrefix(threadID);
     const categories = {};
 
+    // 🔁 Pick current image and update index
+    const helpListImage = helpListImages[currentImageIndex];
+    currentImageIndex = (currentImageIndex + 1) % helpListImages.length;
+
     for (const [name, value] of commands) {
       if (!value?.config || typeof value.onStart !== "function") continue;
       if (value.config.role > 1 && role < value.config.role) continue;
@@ -38,8 +53,6 @@ module.exports = {
       categories[category].push(name);
     }
 
-    const helpListImages = ["https://files.catbox.moe/dzzf6b.jpg"];
-    const helpListImage = helpListImages[Math.floor(Math.random() * helpListImages.length)];
     const rawInput = args.join(" ").trim();
 
     // 🧾 Full Help Menu
@@ -52,14 +65,14 @@ module.exports = {
         msg += `┍━━━[ ${category.toUpperCase()} ]☃\n`;
         const names = categories[category].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
         for (const cmd of names) {
-          msg += `┋🔰 ${cmd}\n`;
+          msg += `┋ᐉ ${cmd}\n`;
         }
         msg += "┕━━━━━━━━━━━━◊\n";
       }
 
       msg += "┍━━━[𝙸𝙽𝙵𝚁𝙾𝙼]━━━◊\n";
       msg += `┋➥𝚃𝙾𝚃𝙰𝙻 𝙲𝙼𝙳: [${commands.size}]\n`;
-      msg += `┋➥𝙿𝚁𝙴𝙵𝙸𝚇: ${prefix}\n`;
+      msg += `┋➥𝙿𝚁𝙴𝙵𝙸𝚇: ⦃ ${prefix} ⦄\n`;
       msg += `┋𝙾𝚆𝙽𝙴𝚁: 𝚂𝙰𝙼𝙸𝚄𝙽  𝙴𝚅𝙰𝙽  𝙰𝚂𝙸𝙵\n`;
       msg += "┕━━━━━━━━━━━◊";
 
@@ -86,7 +99,7 @@ module.exports = {
 
       const names = categories[categoryName].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
       for (const cmd of names) {
-        msg += `┋🔰 ${cmd}\n`;
+        msg += `┋ᐉ ${cmd}\n`;
       }
 
       msg += "┕━━━━━━━━━━━━◊";
@@ -130,7 +143,10 @@ module.exports = {
 ┋📖 Usage      : ${usage}
 ╚════════════════════╝`;
 
-    const sentMsg = await message.reply(response);
+    const sentMsg = await message.reply({
+      body: response,
+      attachment: await global.utils.getStreamFromURL(helpListImage),
+    });
     setTimeout(() => message.unsend(sentMsg.messageID), 120000);
   }
 };
@@ -144,4 +160,4 @@ function roleTextToString(role) {
     case 3: return "3 (Super Admin)";
     default: return `${role} (Unknown)`;
   }
-}
+        }
