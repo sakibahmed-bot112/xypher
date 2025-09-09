@@ -1,44 +1,48 @@
 const axios = require('axios');
-
-const aryanApi = async () => {
-  const base = await axios.get(
-    "https://raw.githubusercontent.com/itzaryan008/ERROR/refs/heads/main/Apis.json"
-  );
-  return base.data.imbb;
-};
+const FormData = require('form-data');
 
 module.exports = {
-    config: {
-        name: "imgbb",
-        version: "0.0.1",
-        role: 0,
-        author: "ArYAN",
-        shortDescription: "imgur upload",
-        countDown: 0,
-        category: "imgur",
-        guide: {
-            en: '[your imgur link]'
-        }
+  config: {
+    name: "imgbb",
+    aliases: ["i"],
+    version: "1.0",
+    author: "Eijah Noah",
+    countDown: 5,
+    role: 0,
+    shortDescription: {
+      en: "Upload image to imgbb"
     },
-
-    onStart: async ({ api, event }) => {
-        let link2;
-
-        if (event.type === "message_reply" && event.messageReply.attachments.length > 0) {
-            link2 = event.messageReply.attachments[0].url;
-        } else if (event.attachments.length > 0) {
-            link2 = event.attachments[0].url;
-        } else {
-            return api.sendMessage('No attachment detected. Please reply to an image.', event.threadID, event.messageID);
-        }
-
-        try {
-            const res = await axios.get(`${await aryanApi()}/imbb?link=${encodeURIComponent(link2)}`);
-            const link = res.data.uploaded.image;
-            return api.sendMessage(`\n\n${link}`, event.threadID, event.messageID);
-        } catch (error) {
-            console.error("Error uploading image to Imgur:", error);
-            return api.sendMessage("An error occurred while uploading the image to Imgur.", event.threadID, event.messageID);
-        }
+    longDescription: {
+      en: "Upload image to imgbb by replying to photo"
+    },
+    category: "tools",
+    guide: {
+      en: ""
     }
+  },
+
+  onStart: async function ({ api, event }) {
+    const imgbbApiKey = "cc7534287e3141c514a70ff04d316190"; 
+    const linkanh = event.messageReply?.attachments[0]?.url;
+    if (!linkanh) {
+      return api.sendMessage('Please reply to an image.', event.threadID, event.messageID);
+    }
+
+    try {
+      const response = await axios.get(linkanh, { responseType: 'arraybuffer' });
+      const formData = new FormData();
+      formData.append('image', Buffer.from(response.data, 'binary'), { filename: 'image.png' });
+      const res = await axios.post('https://api.imgbb.com/1/upload', formData, {
+        headers: formData.getHeaders(),
+        params: {
+          key: imgbbApiKey
+        }
+      });
+      const imageLink = res.data.data.url;
+      return api.sendMessage(imageLink, event.threadID, event.messageID);
+    } catch (error) {
+      console.log(error);
+      return api.sendMessage('Failed to upload image to imgbb.', event.threadID, event.messageID);
+    }
+  }
 };
