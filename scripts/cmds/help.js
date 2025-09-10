@@ -4,7 +4,6 @@ const path = require("path");
 const { getPrefix } = global.utils;
 const { commands, aliases } = global.GoatBot;
 
-// 🧠 Track current image index
 let currentImageIndex = 0;
 
 const helpListImages = [
@@ -18,20 +17,14 @@ const helpListImages = [
 module.exports = {
   config: {
     name: "help",
-    version: "1.18",
+    version: "1.19",
     author: "gay amit",
     countDown: 5,
     role: 0,
-    shortDescription: {
-      en: "View command usage and list all commands directly",
-    },
-    longDescription: {
-      en: "View command usage and list all commands directly",
-    },
+    shortDescription: { en: "View command usage and list all commands directly" },
+    longDescription: { en: "View command usage and list all commands directly" },
     category: "info",
-    guide: {
-      en: "{pn} / help [category] or help commandName",
-    },
+    guide: { en: "{pn} / help [category] or help commandName" },
     priority: 1,
   },
 
@@ -40,14 +33,12 @@ module.exports = {
     const prefix = getPrefix(threadID);
     const categories = {};
 
-    // 🔁 Pick current image and update index
     const helpListImage = helpListImages[currentImageIndex];
     currentImageIndex = (currentImageIndex + 1) % helpListImages.length;
 
     for (const [name, value] of commands) {
       if (!value?.config || typeof value.onStart !== "function") continue;
       if (value.config.role > 1 && role < value.config.role) continue;
-
       const category = value.config.category?.toLowerCase() || "uncategorized";
       if (!categories[category]) categories[category] = [];
       categories[category].push(name);
@@ -55,7 +46,6 @@ module.exports = {
 
     const rawInput = args.join(" ").trim();
 
-    // 🧾 Full Help Menu
     if (!rawInput) {
       let msg = "╔═══════════════╗\n";
       msg += "     🎏 𝙴𝙻𝙾𝙽 𝙷𝙴𝙻𝙿 𝙼𝙴𝙽𝚄\n";
@@ -64,9 +54,7 @@ module.exports = {
       for (const category of Object.keys(categories).sort()) {
         msg += `┍━━━[ ${category.toUpperCase()} ]☃\n`;
         const names = categories[category].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-        for (const cmd of names) {
-          msg += `┋ᐉ ${cmd}\n`;
-        }
+        for (const cmd of names) msg += `┋ᐉ ${cmd}\n`;
         msg += "┕━━━━━━━━━━━━◊\n";
       }
 
@@ -84,10 +72,8 @@ module.exports = {
       return;
     }
 
-    // 📁 Specific Category
     if (rawInput.startsWith("[") && rawInput.endsWith("]")) {
       const categoryName = rawInput.slice(1, -1).toLowerCase();
-
       if (!categories[categoryName]) {
         return message.reply(`❌ Category "${categoryName}" খুঁজে পাওয়া যায়নি।\n📁 Available: ${Object.keys(categories).map(c => `[${c}]`).join(", ")}`);
       }
@@ -98,24 +84,16 @@ module.exports = {
       msg += `┍━━━[ ${categoryName.toUpperCase()} ]\n`;
 
       const names = categories[categoryName].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-      for (const cmd of names) {
-        msg += `┋ᐉ ${cmd}\n`;
-      }
-
+      for (const cmd of names) msg += `┋ᐉ ${cmd}\n`;
       msg += "┕━━━━━━━━━━━━◊";
 
-      const sentMsg = await message.reply({
-        body: msg,
-        attachment: await global.utils.getStreamFromURL(helpListImage),
-      });
+      const sentMsg = await message.reply({ body: msg });
       setTimeout(() => message.unsend(sentMsg.messageID), 120000);
       return;
     }
 
-    // 🔍 Command Detail
     const commandName = rawInput.toLowerCase();
     const command = commands.get(commandName) || commands.get(aliases.get(commandName));
-
     if (!command || !command?.config) {
       return message.reply(`❌ Command "${commandName}" খুঁজে পাওয়া যায়নি।\nTry: /help or /help [category]`);
     }
@@ -143,15 +121,11 @@ module.exports = {
 ┋📖 Usage      : ${usage}
 ╚════════════════════╝`;
 
-    const sentMsg = await message.reply({
-      body: response,
-      attachment: await global.utils.getStreamFromURL(helpListImage),
-    });
+    const sentMsg = await message.reply({ body: response });
     setTimeout(() => message.unsend(sentMsg.messageID), 120000);
   }
 };
 
-// 🧾 Role Name Resolver
 function roleTextToString(role) {
   switch (role) {
     case 0: return "0 (Everyone)";
@@ -160,4 +134,4 @@ function roleTextToString(role) {
     case 3: return "3 (Super Admin)";
     default: return `${role} (Unknown)`;
   }
-        }
+      }
