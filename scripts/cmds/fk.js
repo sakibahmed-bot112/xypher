@@ -10,7 +10,7 @@ module.exports = {
     version: "1.0",
     author: "Tarek",
     countDown: 5,
-    role: 0,
+    role: 2,
     shortDescription: "FK with custom image",
     longDescription: "Generate a fk image with the mentioned user using a custom background. Male on right, female on left.",
     category: "funny",
