@@ -369,7 +369,7 @@ module.exports = {
 				ctx.fillStyle = bgGradient;
 				ctx.fillRect(0, 0, 800, 1200);
 
-				drawGlowingText(ctx, getLang("userCardTitle"), 400, 70, theme.primary, 45);
+				drawGlowingText(ctx, getLang("userCardTitle"), 220, 70, theme.primary, 45);
 				
 				ctx.shadowColor = theme.primary;
 				ctx.shadowBlur = 30;
