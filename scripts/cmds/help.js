@@ -1,4 +1,4 @@
-const fs = require("fs-extra");
+!cmd install help.js const fs = require("fs-extra");
 const axios = require("axios");
 const path = require("path");
 const { getPrefix } = global.utils;
@@ -7,9 +7,9 @@ const { commands, aliases } = global.GoatBot;
 let currentImageIndex = 0;
 
 const helpListImages = [
-  "https://files.catbox.moe/0qrdic.webp",
   "https://files.catbox.moe/sok16l.gif",
   "https://files.catbox.moe/er07ay.webp",
+  "https://files.catbox.moe/0qrdic.webp",
   "https://files.catbox.moe/fdtpzs.webp",
   "https://files.catbox.moe/um8brf.webp"
 ];
@@ -17,8 +17,8 @@ const helpListImages = [
 module.exports = {
   config: {
     name: "help",
-    version: "1.19",
-    author: "gay amit",
+    version: "1.20",
+    author: "asif",
     countDown: 5,
     role: 0,
     shortDescription: { en: "View command usage and list all commands directly" },
@@ -46,6 +46,7 @@ module.exports = {
 
     const rawInput = args.join(" ").trim();
 
+    // MAIN HELP MENU
     if (!rawInput) {
       let msg = "╔═══════════════╗\n";
       msg += "     🎏 𝙴𝙻𝙾𝙽 𝙷𝙴𝙻𝙿 𝙼𝙴𝙽𝚄\n";
@@ -72,26 +73,34 @@ module.exports = {
       return;
     }
 
+    // CATEGORY HELP
     if (rawInput.startsWith("[") && rawInput.endsWith("]")) {
       const categoryName = rawInput.slice(1, -1).toLowerCase();
       if (!categories[categoryName]) {
-        return message.reply(`❌ Category "${categoryName}" খুঁজে পাওয়া যায়নি।\n📁 Available: ${Object.keys(categories).map(c => `[${c}]`).join(", ")}`);
+        return message.reply(
+          `❌ Category "${categoryName}" খুঁজে পাওয়া যায়নি।\n📁 Available: ${Object.keys(categories).map(c => `[${c}]`).join(", ")}`
+        );
       }
 
       let msg = `╔═══════════════╗\n`;
-      msg += `     𝐇𝐄𝐋𝐏 - ${categoryName.toUpperCase()}\n`;
+      msg += `      𝐇𝐄𝐋𝐏 - ${categoryName.toUpperCase()}\n`;
       msg += `╚═══════════════╝\n`;
       msg += `┍━━━[ ${categoryName.toUpperCase()} ]\n`;
 
       const names = categories[categoryName].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-      for (const cmd of names) msg += `┋ᐉ ${cmd}\n`;
-      msg += "┕━━━━━━━━━━━━◊";
+      for (const cmd of names) msg += `┋⭆ ${cmd}\n`;
+      msg += "┕━━━━━━━━━━━━◊\n";
+
+      msg += "╔═══════════════╗\n";
+      msg += `       𝐓𝐎𝐓𝐀𝐋 𝐂𝐌𝐃 - ${names.length}\n`;
+      msg += "╚═══════════════╝";
 
       const sentMsg = await message.reply({ body: msg });
       setTimeout(() => message.unsend(sentMsg.messageID), 120000);
       return;
     }
 
+    // COMMAND HELP
     const commandName = rawInput.toLowerCase();
     const command = commands.get(commandName) || commands.get(aliases.get(commandName));
     if (!command || !command?.config) {
@@ -134,4 +143,4 @@ function roleTextToString(role) {
     case 3: return "3 (Super Admin)";
     default: return `${role} (Unknown)`;
   }
-      }
+}
