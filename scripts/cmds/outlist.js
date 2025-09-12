@@ -104,7 +104,7 @@ module.exports = {
       const target = groupThreads[index - 1];
 
       try {
-        await api.sendMessage("- সবাই ভালো থেকো, আমার বস আসিফ বলছে বের হয়ে যেতে..!😔", target.threadID);
+        await api.sendMessage("- বালের গ্রুপ এ থাকলাম না..!😔", target.threadID);
         await api.removeUserFromGroup(botID, target.threadID);
         success++;
       } catch (err) {
