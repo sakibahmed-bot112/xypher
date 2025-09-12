@@ -4,7 +4,7 @@ const { utils } = global;
 module.exports = {
   config: {
     name: "prefix",
-    version: "1.5",
+    version: "1.6",
     author: "NTkhang || culpaknami from asif",
     countDown: 5,
     role: 0,
@@ -107,8 +107,8 @@ module.exports = {
     if (event.body && event.body.toLowerCase() === "prefix") {
       const botAuthor = "𝐒𝐚𝐢'𝐤𝐨 𝐓. 𝐄𝐯𝐚𝐧";
       const now = new Date();
-      const date = now.toLocaleDateString('en-GB'); // DD/MM/YYYY
-      const time = now.toLocaleTimeString('en-GB'); // HH:MM:SS
+      const date = now.toLocaleDateString("en-GB", { timeZone: "Asia/Dhaka" });
+      const time = now.toLocaleTimeString("en-GB", { timeZone: "Asia/Dhaka", hour12: true });
 
       return message.reply({
         body:
