@@ -6,15 +6,15 @@ const path = require("path");
 module.exports = {
   config: {
     name: "welcome",
-    version: "2.0",
-    author: "Ew'r Saim",
+    version: "3.0",
+    author: "Ew'r Saim + Fixed by ChatGPT",
     category: "events"
   },
 
   onStart: async function ({ api, event }) {
     if (event.logMessageType !== "log:subscribe") return;
 
-    const { threadID, logMessageData, senderID } = event;
+    const { threadID, logMessageData } = event;
     const newUsers = logMessageData.addedParticipants;
     const botID = api.getCurrentUserID();
 
@@ -28,8 +28,11 @@ module.exports = {
       const userId = user.userFbId;
       const fullName = user.fullName;
 
+      // 🎨 Fonts
       const FONT_NAME = "ModernNoirBold";
-      const FONT_URL = "https://github.com/Saim12678/Saim/blob/693ceed2f392ac4fe6f98f77b22344f6fc5ac9f8/fonts/tt-modernoir-trial.bold.ttf?raw=true";
+      const FONT_URL = "https://github.com/Saim12678/Saim/raw/693ceed2f392ac4fe6f98f77b22344f6fc5ac9f8/fonts/tt-modernoir-trial.bold.ttf";
+      const FONT_FALLBACK = "NotoSans";
+      const FONT_FALLBACK_URL = "https://github.com/google/fonts/raw/main/ofl/notosans/NotoSans-Regular.ttf";
 
       const TEXT_STYLES = {
         name: { fontSize: 64, y: 345 },
@@ -55,21 +58,32 @@ module.exports = {
       const avatarPath = path.join(tmp, `avt_${userId}.png`);
       const bgPath = path.join(tmp, "bg.jpg");
       const outputPath = path.join(tmp, `welcome_${userId}.png`);
-      const fontPath = path.join(tmp, `${FONT_NAME}.ttf`);
+      const fontPathMain = path.join(tmp, `${FONT_NAME}.ttf`);
+      const fontPathFallback = path.join(tmp, `${FONT_FALLBACK}.ttf`);
 
       try {
-        if (!fs.existsSync(fontPath)) {
+        // Main font download
+        if (!fs.existsSync(fontPathMain)) {
           const fontRes = await axios.get(FONT_URL, { responseType: "arraybuffer" });
-          fs.writeFileSync(fontPath, fontRes.data);
+          fs.writeFileSync(fontPathMain, fontRes.data);
         }
-        registerFont(fontPath, { family: FONT_NAME });
+        registerFont(fontPathMain, { family: FONT_NAME });
 
+        // Fallback Unicode font download
+        if (!fs.existsSync(fontPathFallback)) {
+          const fontRes2 = await axios.get(FONT_FALLBACK_URL, { responseType: "arraybuffer" });
+          fs.writeFileSync(fontPathFallback, fontRes2.data);
+        }
+        registerFont(fontPathFallback, { family: FONT_FALLBACK });
+
+        // Avatar
         const avatarRes = await axios.get(
           `https://graph.facebook.com/${userId}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
           { responseType: "arraybuffer" }
         );
         fs.writeFileSync(avatarPath, avatarRes.data);
 
+        // Background
         const bgRes = await axios.get(bgUrl, { responseType: "arraybuffer" });
         fs.writeFileSync(bgPath, bgRes.data);
 
@@ -82,6 +96,7 @@ module.exports = {
 
         ctx.drawImage(bg, 0, 0, W, H);
 
+        // Avatar Circle
         const ax = (W - avatarSize) / 2;
         const ay = 30;
 
@@ -97,10 +112,11 @@ module.exports = {
         ctx.drawImage(avatar, ax, ay, avatarSize, avatarSize);
         ctx.restore();
 
+        // Draw Text with Fallback font
         function draw3DText(ctx, text, x, y, fontSize) {
-          ctx.font = `${fontSize}px ${FONT_NAME}`;
+          ctx.font = `${fontSize}px "${FONT_NAME}", "${FONT_FALLBACK}"`;
           ctx.textAlign = "center";
-          const offsets = [[4, 4], [3.5, 3.5], [3, 3], [2.5, 2.5], [2, 2], [1.5, 1.5], [1, 1]];
+          const offsets = [[4, 4], [3, 3], [2, 2], [1, 1]];
           ctx.fillStyle = "#000000";
           for (let [dx, dy] of offsets) ctx.fillText(text, x + dx, y + dy);
           ctx.fillStyle = "#ffffff";
@@ -114,6 +130,7 @@ module.exports = {
         const buffer = canvas.toBuffer("image/png");
         fs.writeFileSync(outputPath, buffer);
 
+        // Time
         const timeStr = new Date().toLocaleString("en-BD", {
           timeZone: "Asia/Dhaka",
           hour: "2-digit", minute: "2-digit", second: "2-digit",
@@ -121,6 +138,7 @@ module.exports = {
           hour12: true,
         });
 
+        // Send Message
         await api.sendMessage({
           body:
             `‎𝐇𝐞𝐥𝐥𝐨 ${fullName}\n` +
@@ -132,6 +150,7 @@ module.exports = {
           mentions: [{ tag: fullName, id: userId }]
         }, threadID);
 
+        // Cleanup
         fs.unlinkSync(avatarPath);
         fs.unlinkSync(bgPath);
         fs.unlinkSync(outputPath);
