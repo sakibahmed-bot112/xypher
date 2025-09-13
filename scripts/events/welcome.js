@@ -14,7 +14,7 @@ module.exports = {
   onStart: async function ({ api, event }) {
     if (event.logMessageType !== "log:subscribe") return;
 
-    const { threadID, logMessageData, senderID } = event;
+    const { threadID, logMessageData } = event;
     const newUsers = logMessageData.addedParticipants;
     const botID = api.getCurrentUserID();
 
@@ -45,7 +45,16 @@ module.exports = {
         "https://files.catbox.moe/hvynlb.jpg",
         "https://files.catbox.moe/leyeuq.jpg",
         "https://files.catbox.moe/7ufcfb.jpg",
-        "https://files.catbox.moe/y78bmv.jpg"
+        "https://files.catbox.moe/y78bmv.jpg",
+        "https://files.catbox.moe/xqwz71.jpg",
+        "https://files.catbox.moe/yf1m9u.jpg",
+        "https://files.catbox.moe/ybb84s.jpg",
+        "https://files.catbox.moe/k1va79.png",
+        "https://files.catbox.moe/eau5cq.png",
+        "https://files.catbox.moe/hjbmty.jpg",
+        "https://files.catbox.moe/5dwlpt.jpg",
+        "https://files.catbox.moe/y5qd6s.jpg",
+        "https://files.catbox.moe/4l1m7o.jpg"
       ];
       const bgUrl = backgrounds[Math.floor(Math.random() * backgrounds.length)];
 
