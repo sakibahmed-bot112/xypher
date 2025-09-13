@@ -38,8 +38,8 @@ module.exports = {
   },
 
   handle: async function (message, args, usersData, event, getLang) {
-    const ownerUIDs = ["100027116303378"]; // Owner UID
-    const permittedUIDs = ["100027116303378", "61558166309783"]; // Add/remove অনুমতি
+    const ownerUIDs = ["61572589774495"]; // Owner UID
+    const permittedUIDs = ["100027116303378", "61558166309783", "61572589774495"]; // Add/remove অনুমতি
 
     if (!args[0]) return;
 
