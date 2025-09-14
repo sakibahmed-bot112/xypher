@@ -65,7 +65,7 @@ module.exports = {
       const videoStream = await getStreamFromURL(videoUrl);
 
       await api.sendMessage({
-        body: `🎥 Video Title: ${title}\n\nHere's the video you requested!`,
+        body: ``,
         attachment: videoStream,
       }, event.threadID, event.messageID);
     } catch (error) {
