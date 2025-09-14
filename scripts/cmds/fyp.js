@@ -18,7 +18,7 @@ async function fetchTikTokVideos(query) {
 module.exports = {
   config: {
     name: "fyp",
-    aliases: ["tiktok", "tikdl", "tik"],
+    aliases: ["fy", "fyp", "fp"],
     author: "Mahi--",
     version: "2.1",
     shortDescription: {
@@ -64,7 +64,7 @@ module.exports = {
       const videoStream = await getStreamFromURL(videoUrl);
 
       await api.sendMessage({
-        body: `🎥 Video Title: ${title}\n\nHere's the video you requested!`,
+        body: ``,
         attachment: videoStream,
       }, event.threadID, event.messageID);
     } catch (error) {
