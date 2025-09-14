@@ -1,7 +1,7 @@
 module.exports = {
 	config: {
 		name: "count",
-		version: "2.5",
+		version: "2.5", // Updated version
 		author: "Mahi--",
 		countDown: 10,
 		role: 0,
@@ -185,7 +185,6 @@ module.exports = {
 		];
 		const theme = themes[Math.floor(Math.random() * themes.length)];
 
-		// ---------- helper functions ----------
 		const getAvatar = async (uid, name) => {
 			try {
 				const url = `https://graph.facebook.com/${uid}/picture?width=512&height=512&access_token=${ACCESS_TOKEN}`;
@@ -234,105 +233,7 @@ module.exports = {
 			ctx.drawImage(avatar, x - radius, y - radius, radius * 2, radius * 2);
 			ctx.restore();
 		};
-
-		// ---------- galaxy background helper ----------
-		const hexToRgba = (hex, alpha) => {
-			if (!hex) return `rgba(255,255,255,${alpha})`;
-			hex = hex.replace('#','');
-			if (hex.length === 3) hex = hex.split('').map(h => h+h).join('');
-			const r = parseInt(hex.substr(0,2),16);
-			const g = parseInt(hex.substr(2,2),16);
-			const b = parseInt(hex.substr(4,2),16);
-			return `rgba(${r},${g},${b},${alpha})`;
-		};
-
-		const drawGalaxyBackground = (ctx, width, height, themeObj) => {
-			// base gradient
-			const g = ctx.createLinearGradient(0, 0, 0, height);
-			g.addColorStop(0, themeObj.bg[0]);
-			g.addColorStop(1, themeObj.bg[1]);
-			ctx.fillStyle = g;
-			ctx.fillRect(0, 0, width, height);
-
-			// faint grid (keeps your ticks look)
-			ctx.save();
-			ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-			ctx.lineWidth = 1;
-			for (let i = 0; i < width; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke(); }
-			for (let i = 0; i < height; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(width, i); ctx.stroke(); }
-			ctx.restore();
-
-			// stars
-			const starCount = Math.floor((width * height) / 8000);
-			for (let i = 0; i < starCount; i++) {
-				const x = Math.random() * width;
-				const y = Math.random() * height;
-				const r = Math.random() * 1.6;
-				const alpha = 0.15 + Math.random() * 0.85;
-				ctx.beginPath();
-				ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-				ctx.arc(x, y, r, 0, Math.PI * 2);
-				ctx.fill();
-			}
-
-			// bright sparkles
-			const brightStars = Math.floor(starCount * 0.03);
-			for (let i = 0; i < brightStars; i++) {
-				const x = Math.random() * width;
-				const y = Math.random() * height * 0.75;
-				ctx.save();
-				ctx.shadowColor = 'rgba(255,255,255,0.95)';
-				ctx.shadowBlur = 10 + Math.random() * 20;
-				ctx.fillStyle = 'rgba(255,255,255,1)';
-				ctx.beginPath();
-				ctx.arc(x, y, 1 + Math.random() * 2.5, 0, Math.PI * 2);
-				ctx.fill();
-				ctx.restore();
-			}
-
-			// nebulas (layered radial glows)
-			const nebulas = [
-				{ x: width * 0.22, y: height * 0.25, r: Math.min(width, height) * 0.6, color: themeObj.primary },
-				{ x: width * 0.78, y: height * 0.33, r: Math.min(width, height) * 0.5, color: '#7B61FF' },
-				{ x: width * 0.55, y: height * 0.65, r: Math.min(width, height) * 0.9, color: '#00C2FF' }
-			];
-			nebulas.forEach((n) => {
-				const rg = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
-				rg.addColorStop(0, hexToRgba(n.color, 0.18));
-				rg.addColorStop(0.35, hexToRgba(n.color, 0.08));
-				rg.addColorStop(1, 'rgba(0,0,0,0)');
-				ctx.globalCompositeOperation = 'lighter';
-				ctx.fillStyle = rg;
-				ctx.beginPath();
-				ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-				ctx.fill();
-				ctx.globalCompositeOperation = 'source-over';
-			});
-
-			// subtle spiral strokes to mimic galaxy arms
-			ctx.save();
-			ctx.translate(width / 2, height / 2);
-			ctx.globalAlpha = 0.06;
-			ctx.rotate(0.6);
-			for (let s = 0; s < 3; s++) {
-				ctx.beginPath();
-				ctx.ellipse(0, 0, width * (0.6 - 0.12 * s), height * (0.18 + 0.04 * s), s * 0.4, 0, Math.PI * 2);
-				ctx.strokeStyle = themeObj.primary;
-				ctx.lineWidth = 1 + s;
-				ctx.stroke();
-			}
-			ctx.restore();
-
-			// vignette
-			const vign = ctx.createRadialGradient(width/2, height/2, Math.min(width,height)/4, width/2, height/2, Math.max(width,height));
-			vign.addColorStop(0, 'rgba(0,0,0,0)');
-			vign.addColorStop(1, 'rgba(0,0,0,0.35)');
-			ctx.fillStyle = vign;
-			ctx.fillRect(0,0,width,height);
-		};
-
-		// ---------- end helpers ----------
-
+		
 		if (args[0]?.toLowerCase() === 'all') {
 			const usersPerPage = 10;
 			const leaderboardUsers = combinedData.filter(u => u.rank > 3);
@@ -346,8 +247,16 @@ module.exports = {
 			const canvas = new Canvas(1200, 1700);
 			const ctx = canvas.getContext('2d');
 			
-			// draw galaxy background
-			drawGalaxyBackground(ctx, 1200, 1700, theme);
+			const bgGradient = ctx.createLinearGradient(0, 0, 0, 1700);
+			bgGradient.addColorStop(0, theme.bg[0]);
+			bgGradient.addColorStop(1, theme.bg[1]);
+			ctx.fillStyle = bgGradient;
+			ctx.fillRect(0, 0, 1200, 1700);
+			
+			ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+			ctx.lineWidth = 1;
+			for (let i = 0; i < 1200; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 1700); ctx.stroke(); }
+			for (let i = 0; i < 1700; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(1200, i); ctx.stroke(); }
 			
 			ctx.textAlign = 'center';
 			drawGlowingText(ctx, getLang("leaderboardTitle"), 600, 100, theme.primary, 60);
@@ -454,8 +363,11 @@ module.exports = {
 				const canvas = new Canvas(800, 1200);
 				const ctx = canvas.getContext('2d');
 
-				// draw galaxy background for user card
-				drawGalaxyBackground(ctx, 800, 1200, theme);
+				const bgGradient = ctx.createLinearGradient(0, 0, 0, 1200);
+				bgGradient.addColorStop(0, theme.bg[0]);
+				bgGradient.addColorStop(1, theme.bg[1]);
+				ctx.fillStyle = bgGradient;
+				ctx.fillRect(0, 0, 800, 1200);
 
 				drawGlowingText(ctx, getLang("userCardTitle"), 220, 70, theme.primary, 45);
 				
