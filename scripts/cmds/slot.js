@@ -25,6 +25,11 @@ const payouts = {
   "7️⃣7️⃣": 5,
 };
 
+// --- Normalize helper ---
+function normalizeEmoji(e) {
+  return twemoji.convert.toCodePoint(e, "-");
+}
+
 // --- Weighted Reels ---
 function generateWeightedReelStrip() {
   const weights = {
@@ -64,9 +69,11 @@ const weightedReelStrips = [
 const emojiCache = {};
 async function preloadEmojis() {
   for (const s of symbols) {
-    const svg = twemoji.parse(s, { folder: "svg", ext: ".svg" });
-    const url = svg.match(/src="(.*?)"/)[1];
-    emojiCache[s] = await loadImage(url);
+    if (!emojiCache[s]) {
+      const svg = twemoji.parse(s, { folder: "svg", ext: ".svg" });
+      const url = svg.match(/src="(.*?)"/)[1];
+      emojiCache[s] = await loadImage(url);
+    }
   }
 }
 
@@ -85,10 +92,9 @@ function getResult() {
 }
 
 function calculateWinnings(result, bet) {
-  const key = result.join("");
-
-  if (payouts[key]) {
-    return { amount: bet * payouts[key], winType: "JACKPOT" };
+  const joined = result.join("");
+  if (payouts[joined]) {
+    return { amount: bet * payouts[joined], winType: "JACKPOT" };
   }
 
   if (result[0] === result[1] && payouts[result[0] + result[1]]) {
@@ -106,11 +112,11 @@ module.exports = {
   config: {
     name: "slot",
     aliases: ["slots"],
-    version: "3.0",
+    version: "3.1",
     author: "TawsiN",
     role: 0,
     shortDescription: { en: "Play the slot machine" },
-    longDescription: { en: "Play a slot machine game with animated GIF output and Twemoji rendering." },
+    longDescription: { en: "Slot machine game with animated GIF + Twemoji rendering." },
     category: "economy",
     guide: { en: "{pn} <bet_amount>" },
   },
@@ -130,7 +136,7 @@ module.exports = {
     const processingMessage = await message.reply("Spinning the reels...");
 
     try {
-      await preloadEmojis(); // Preload emoji images once
+      await preloadEmojis();
 
       userData.money -= betAmount;
       await usersData.set(senderID, { money: userData.money });
@@ -230,9 +236,9 @@ module.exports = {
           ctx.fillStyle = winnings > 0 ? "#4ade80" : "#ef4444";
           ctx.font = "bold 28px Arial";
           if (winType === "JACKPOT") {
-            ctx.fillText(`JACKPOT! ${result[0]} ${result[1]} ${result[2]}`, canvasWidth / 2, 320);
+            ctx.fillText(`JACKPOT! ${result.join(" ")}`, canvasWidth / 2, 320);
           } else if (winType === "DOUBLE") {
-            ctx.fillText(`DOUBLE!`, canvasWidth / 2, 320);
+            ctx.fillText(`DOUBLE! ${result.join(" ")}`, canvasWidth / 2, 320);
           } else {
             ctx.fillText("NO WIN", canvasWidth / 2, 320);
           }
@@ -247,7 +253,7 @@ module.exports = {
         encoder.addFrame(ctx);
       }
 
-      // Hold last frame for 3 seconds
+      // Hold last frame
       for (let hold = 0; hold < 30; hold++) {
         encoder.addFrame(ctx);
       }
