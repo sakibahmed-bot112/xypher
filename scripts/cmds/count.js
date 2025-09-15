@@ -653,4 +653,4 @@ module.exports = {
       message.reply(getLang("invalidPage"));
     }
   }
-};amr 
+};
