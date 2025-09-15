@@ -7,22 +7,22 @@ const twemoji = require("twemoji");
 // --- Game Configuration ---
 const symbols = ["🍒", "🍋", "🍊", "🍉", "⭐", "🔔", "💎", "7️⃣"];
 const payouts = {
-  "7️⃣7️⃣7️⃣": 100,
-  "💎💎💎": 50,
-  "🔔🔔🔔": 25,
-  "⭐⭐⭐": 15,
-  "🍉🍉🍉": 10,
-  "🍊🍊🍊": 7,
-  "🍋🍋🍋": 5,
-  "🍒🍒🍒": 3,
-  "🍒🍒": 2,
-  "🍋🍋": 2,
-  "🍊🍊": 2,
-  "🍉🍉": 2,
-  "⭐⭐": 2,
-  "🔔🔔": 2,
-  "💎💎": 2,
-  "7️⃣7️⃣": 5,
+  "7️⃣7️⃣7️⃣": 200,
+  "💎💎💎": 100,
+  "🔔🔔🔔": 50,
+  "⭐⭐⭐": 30,
+  "🍉🍉🍉": 20,
+  "🍊🍊🍊": 15,
+  "🍋🍋🍋": 10,
+  "🍒🍒🍒": 6,
+  "🍒🍒": 3,
+  "🍋🍋": 3,
+  "🍊🍊": 3,
+  "🍉🍉": 3,
+  "⭐⭐": 3,
+  "🔔🔔": 3,
+  "💎💎": 5,
+  "7️⃣7️⃣": 10,
 };
 
 // --- Normalize helper ---
@@ -33,14 +33,14 @@ function normalizeEmoji(e) {
 // --- Weighted Reels ---
 function generateWeightedReelStrip() {
   const weights = {
-    "🍒": 12,
-    "🍋": 10,
+    "🍒": 10,
+    "🍋": 9,
     "🍊": 8,
-    "🍉": 6,
-    "⭐": 5,
-    "🔔": 4,
-    "💎": 3,
-    "7️⃣": 2,
+    "🍉": 7,
+    "⭐": 6,
+    "🔔": 5,
+    "💎": 4,
+    "7️⃣": 3,
   };
 
   let weightedStrip = [];
@@ -84,11 +84,22 @@ async function drawEmoji(ctx, x, y, emoji, size = 70) {
 
 // --- Game Functions ---
 function getResult() {
-  return [
-    weightedReelStrips[0][Math.floor(Math.random() * weightedReelStrips[0].length)],
-    weightedReelStrips[1][Math.floor(Math.random() * weightedReelStrips[1].length)],
-    weightedReelStrips[2][Math.floor(Math.random() * weightedReelStrips[2].length)],
-  ];
+  const reel1 = weightedReelStrips[0][Math.floor(Math.random() * weightedReelStrips[0].length)];
+  let reel2, reel3;
+
+  const rand = Math.random();
+
+  if (rand < 0.59) { 
+    // 59% chance Win
+    reel2 = reel1;
+    reel3 = Math.random() < 0.5 ? reel1 : symbols[Math.floor(Math.random() * symbols.length)];
+  } else {
+    // 41% chance Loss
+    reel2 = weightedReelStrips[1][Math.floor(Math.random() * weightedReelStrips[1].length)];
+    reel3 = weightedReelStrips[2][Math.floor(Math.random() * weightedReelStrips[2].length)];
+  }
+
+  return [reel1, reel2, reel3];
 }
 
 function calculateWinnings(result, bet) {
@@ -108,11 +119,12 @@ function calculateWinnings(result, bet) {
   return { amount: 0, winType: "LOSS" };
 }
 
+// --- Module Export ---
 module.exports = {
   config: {
     name: "slot",
     aliases: ["slots"],
-    version: "3.1",
+    version: "3.2",
     author: "TawsiN",
     role: 0,
     shortDescription: { en: "Play the slot machine" },
@@ -133,7 +145,7 @@ module.exports = {
       return message.reply("You don't have enough money to place that bet.");
     }
 
-    const processingMessage = await message.reply("Spinning the reels...");
+    const processingMessage = await message.reply("𝗦𝗹𝗼𝘁 𝗺𝗮𝗰𝗵𝗶𝗻𝗲 𝗰𝗿𝗲𝗮𝘁𝗶𝗻𝗴 𝘄𝗮𝗶𝘁...");
 
     try {
       await preloadEmojis();
@@ -174,21 +186,18 @@ module.exports = {
       const spinDuration = 20;
 
       for (let i = 0; i < frameCount; i++) {
-        // Background
         const gradient = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
         gradient.addColorStop(0, "#1a1a2e");
         gradient.addColorStop(1, "#16213e");
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-        // Frame
         ctx.fillStyle = "#222242";
         ctx.fillRect(80, 110, 440, 160);
         ctx.strokeStyle = "#ffcc00";
         ctx.lineWidth = 5;
         ctx.strokeRect(80, 110, 440, 160);
 
-        // Title
         ctx.fillStyle = "#ffcc00";
         ctx.shadowColor = "rgba(255, 204, 0, 0.5)";
         ctx.shadowBlur = 10;
@@ -197,7 +206,6 @@ module.exports = {
         ctx.fillText("SLOT MACHINE", canvasWidth / 2, 60);
         ctx.shadowBlur = 0;
 
-        // Reels
         for (let r = 0; r < 3; r++) {
           ctx.save();
           ctx.beginPath();
@@ -231,7 +239,6 @@ module.exports = {
           ctx.strokeRect(reelPositionsX[r] - reelWidth / 2, reelWindowY - reelHeight / 2, reelWidth, reelHeight);
         }
 
-        // Final result text
         if (i === frameCount - 1) {
           ctx.fillStyle = winnings > 0 ? "#4ade80" : "#ef4444";
           ctx.font = "bold 28px Arial";
@@ -253,7 +260,6 @@ module.exports = {
         encoder.addFrame(ctx);
       }
 
-      // Hold last frame
       for (let hold = 0; hold < 30; hold++) {
         encoder.addFrame(ctx);
       }
