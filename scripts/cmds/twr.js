@@ -20,7 +20,7 @@ async function fetchTikTokVideos(query) {
 
 module.exports = {
   config: {
-    name: "twixtor",
+    name: "twr",
     aliases: [],
     author: "Vex_kshitiz",
     version: "1.0",
@@ -30,7 +30,7 @@ module.exports = {
     longDescription: {
       en: "search for anime twixtors",
     },
-    category: "fun",
+    category: "video",
     guide: {
       en: "{p}{n} [query]",
     },
