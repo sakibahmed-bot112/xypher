@@ -233,49 +233,6 @@ module.exports = {
 			ctx.drawImage(avatar, x - radius, y - radius, radius * 2, radius * 2);
 			ctx.restore();
 		};
-
-		// New: Draw a starfield-like sparkling space background overlay
-		const drawStarfield = (ctx, width, height, count = 300) => {
-			// base tiny stars
-			for (let i = 0; i < count; i++) {
-				const x = Math.random() * width;
-				const y = Math.random() * height;
-				const r = Math.random() * 1.4 + 0.2;
-				const alpha = 0.2 + Math.random() * 0.9;
-				ctx.beginPath();
-				ctx.arc(x, y, r, 0, Math.PI * 2);
-				ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-				// small glow
-				ctx.shadowColor = 'rgba(255,255,255,0.9)';
-				ctx.shadowBlur = Math.random() * 8;
-				ctx.fill();
-				ctx.shadowBlur = 0;
-			}
-			// a few larger twinkles
-			for (let i = 0; i < Math.floor(count * 0.02); i++) {
-				const x = Math.random() * width;
-				const y = Math.random() * height;
-				const r = 1.8 + Math.random() * 3.5;
-				ctx.beginPath();
-				ctx.arc(x, y, r, 0, Math.PI * 2);
-				ctx.fillStyle = 'rgba(255,255,255,0.95)';
-				ctx.shadowColor = 'rgba(255,255,255,1)';
-				ctx.shadowBlur = 20 + Math.random() * 30;
-				ctx.fill();
-				ctx.shadowBlur = 0;
-			}
-			// subtle distant nebula/soft glows
-			for (let i = 0; i < 6; i++) {
-				const x = Math.random() * width;
-				const y = Math.random() * height;
-				const grd = ctx.createRadialGradient(x, y, 0, x, y, Math.max(width, height) * (0.06 + Math.random() * 0.12));
-				const hue = 180 + Math.random() * 180;
-				grd.addColorStop(0, `rgba(255,255,255,${0.06 + Math.random() * 0.12})`);
-				grd.addColorStop(1, 'rgba(0,0,0,0)');
-				ctx.fillStyle = grd;
-				ctx.fillRect(x - width * 0.12, y - height * 0.12, width * 0.24, height * 0.24);
-			}
-		};
 		
 		if (args[0]?.toLowerCase() === 'all') {
 			const usersPerPage = 10;
@@ -295,9 +252,6 @@ module.exports = {
 			bgGradient.addColorStop(1, theme.bg[1]);
 			ctx.fillStyle = bgGradient;
 			ctx.fillRect(0, 0, 1200, 1700);
-
-			// draw starfield overlay to create 'space with sparkling stars' background
-			drawStarfield(ctx, 1200, 1700, 360);
 			
 			ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
 			ctx.lineWidth = 1;
@@ -414,9 +368,6 @@ module.exports = {
 				bgGradient.addColorStop(1, theme.bg[1]);
 				ctx.fillStyle = bgGradient;
 				ctx.fillRect(0, 0, 800, 1200);
-
-				// overlay sparkling space-like starfield on user card too
-				drawStarfield(ctx, 800, 1200, 180);
 
 				drawGlowingText(ctx, getLang("userCardTitle"), 220, 70, theme.primary, 45);
 				
