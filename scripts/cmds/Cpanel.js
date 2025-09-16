@@ -191,10 +191,10 @@ module.exports = {
                 ctx.textBaseline = 'middle';
                 ctx.fillStyle = glowColor;
                 ctx.font = 'bold 28px Arial';
-                ctx.fillText("Anchestor", centerX, centerY - 15);
+                ctx.fillText("OWNER", centerX, centerY - 15);
                 ctx.fillStyle = textColor;
                 ctx.font = '16px Arial';
-                ctx.fillText("by mahi", centerX, centerY + 22);
+                ctx.fillText("by Asif", centerX, centerY + 22);
 
                 const now = new Date();
                 const dateString = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
