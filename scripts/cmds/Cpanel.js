@@ -194,7 +194,7 @@ module.exports = {
                 ctx.fillText("OWNER", centerX, centerY - 15);
                 ctx.fillStyle = textColor;
                 ctx.font = '16px Arial';
-                ctx.fillText("by Asif", centerX, centerY + 22);
+                ctx.fillText("BY ASIF", centerX, centerY + 22);
 
                 const now = new Date();
                 const dateString = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
