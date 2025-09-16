@@ -99,7 +99,7 @@ module.exports = {
   },
 
   onReply: async function ({ api, event, Reply, args }) {
-    const { author, commandName, animeList, subCmd } = Reply;
+    const { author, animeList } = Reply;
 
     if (event.senderID !== author || !animeList) {
       return;
@@ -114,13 +114,15 @@ module.exports = {
 
     const selectedAnime = animeList[animeIndex - 1];
     const posterUrl = selectedAnime.poster_url;
-    const description = selectedAnime.description;
 
     try {
       const posterFileName = path.join(__dirname, 'cache', `${Date.now()}_${selectedAnime.name}.jpg`);
       await downloadPoster(posterUrl, posterFileName);
       const posterStream = fs.createReadStream(posterFileName);
-      api.sendMessage({ body: description, attachment: posterStream }, event.threadID, event.messageID);
+
+      // শুধু ছবি যাবে, body বাদ
+      api.sendMessage({ attachment: posterStream }, event.threadID, event.messageID);
+
     } catch (error) {
       console.error(error);
       api.sendMessage({ body: "An error occurred while processing the anime.\nPlease try again later." }, event.threadID);
