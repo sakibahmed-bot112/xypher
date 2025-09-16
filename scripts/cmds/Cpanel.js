@@ -190,11 +190,11 @@ module.exports = {
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillStyle = glowColor;
-                ctx.font = 'bold 28px Arial';
+                ctx.font = 'bold 30px Arial';
                 ctx.fillText("OWNER", centerX, centerY - 15);
                 ctx.fillStyle = textColor;
-                ctx.font = '20px Arial';
-                ctx.fillText("BY ASIF", centerX, centerY + 22);
+                ctx.font = '22px Arial';
+                ctx.fillText("ITS ASIF", centerX, centerY + 22);
 
                 const now = new Date();
                 const dateString = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
