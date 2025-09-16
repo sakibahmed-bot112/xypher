@@ -193,7 +193,7 @@ module.exports = {
                 ctx.font = 'bold 28px Arial';
                 ctx.fillText("OWNER", centerX, centerY - 15);
                 ctx.fillStyle = textColor;
-                ctx.font = '16px Arial';
+                ctx.font = '20px Arial';
                 ctx.fillText("BY ASIF", centerX, centerY + 22);
 
                 const now = new Date();
