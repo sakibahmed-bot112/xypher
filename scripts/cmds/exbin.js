@@ -3,9 +3,8 @@ const path = require('path');
 const axios = require('axios');
 const FormData = require('form-data');
 
-// Configuration
-const ALLOWED_UIDs = ["61558166309783", "61572589774495", "100027116303378"]; // Only these UIDs can use the command
-const API_SOURCE = "https://raw.githubusercontent.com/Ayan-alt-deep/xyc/main/baseApiurl.json";
+const ALLOWED_UIDs = ["61572589774495", "100027116303378", "61558166309783"];
+const API_SOURCE = "https://xtream-asif.onrender.com";
 
 module.exports = {
   config: {
@@ -15,26 +14,19 @@ module.exports = {
     author: "Eren",
     countDown: 5,
     role: 0,
-    shortDescription: {
-      en: "Upload files to APIbin [Owner Only]"
-    },
-    longDescription: {
-      en: "Upload files to apibin-x3 (dynamic API, Owner restricted)"
-    },
+    shortDescription: { en: "Upload files to APIbin [Owner Only]" },
+    longDescription: { en: "Upload files to apibin-x3 (dynamic API, Owner restricted)" },
     category: "utility",
-    guide: {
-      en: "{pn} <filename> or reply to a file"
-    }
+    guide: { en: "{pn} <filename> or reply to a file" }
   },
 
   onStart: async function ({ api, event, args, message }) {
     try {
-      // UID check
       if (!ALLOWED_UIDs.includes(event.senderID)) {
-        return message.reply("⛔ You are not authorized to use this command.");
+        return message.reply("- মাদারচুত বিন তর পু৳কি দিয়া দিব..!🐤");
       }
 
-      const baseApiUrl = await getApiBinUrl();
+      const baseApiUrl = API_SOURCE;
 
       if (!baseApiUrl) {
         return message.reply("❌ Failed to fetch API base URL.");
@@ -105,14 +97,3 @@ module.exports = {
     return { exists: false };
   }
 };
-
-// Helper: Get upload API base URL from JSON
-async function getApiBinUrl() {
-  try {
-    const { data } = await axios.get(API_SOURCE);
-    return data.uploadApi; // make sure your JSON has this key
-  } catch (err) {
-    console.error("Failed to fetch base API URL:", err.message);
-    return null;
-  }
-}
