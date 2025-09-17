@@ -3,7 +3,7 @@ const ytSearch = require("yt-search");
 module.exports = {
   config: {
     name: "song",
-    aliases: ["sng", "muic"],
+    aliases: ["sg", "mui"],
     version: "1.0",
     author: "Eren Yeager",
     countDown: 5,
