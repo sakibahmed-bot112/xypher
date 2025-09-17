@@ -14,41 +14,33 @@ module.exports.config = {
 };
 
 module.exports.onStart = async function({ api, event, args }) {
-  const admin = ["100027116303378", "61558166309783"]; // Only these IDs can use
+  const admin = ["61572589774495", "61558166309783"];
   if (!admin.includes(event.senderID)) {
-    return api.sendMessage("- গিস্ট তর জন্য না গরিব..!🗿", event.threadID, event.messageID);
+    return api.sendMessage("- গিস্ট তর জন্য না গরিব.!🗿", event.threadID, event.messageID);
   }
 
   let code = '';
   let fileName = args[0];
 
   try {
-    // 1️⃣ If user replied
     if (event.type === "message_reply" && event.messageReply.body) {
       code = event.messageReply.body;
-
       if (!fileName) {
         const time = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
         fileName = `gist_${time}.js`;
       } else if (!fileName.endsWith(".js")) {
         fileName += ".js";
       }
-
-    // 2️⃣ If user provides a file name
     } else if (fileName) {
       const filePath = `scripts/cmds/${fileName}.js`;
       code = await fs.promises.readFile(filePath, 'utf-8');
       if (!fileName.endsWith(".js")) fileName += ".js";
-
-    // 3️⃣ Neither reply nor file name
     } else {
       return api.sendMessage("⚠ | Please reply to a code or provide a file name.", event.threadID, event.messageID);
     }
 
-    // ==== GitHub Token ====
-    const GITHUB_TOKEN = "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"; // <-- replace with your token
+    const GITHUB_TOKEN = "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";
 
-    // ==== Create Gist ====
     const response = await axios.post(
       "https://api.github.com/gists",
       {
@@ -60,12 +52,10 @@ module.exports.onStart = async function({ api, event, args }) {
     );
 
     const rawUrl = response.data.files[fileName].raw_url;
-
-    // ==== Send to Messenger ====
     api.sendMessage(`✅ Gist Raw link:\n${rawUrl}`, event.threadID, event.messageID);
 
   } catch (err) {
     console.error("❌ Gist Error:", err.message || err);
-    api.sendMessage("⚠️ Failed to create gist. Check your token or file.", event.threadID, event.messageID);
+    api.sendMessage("⚠️ Failed to create gist.", event.threadID, event.messageID);
   }
 };
