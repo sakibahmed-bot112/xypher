@@ -11,7 +11,7 @@ module.exports = {
     name: "exbin",
     aliases: ["bin"],
     version: "3.2",
-    author: "Eren",
+    author: "asif",
     countDown: 5,
     role: 0,
     shortDescription: { en: "Upload files to APIbin [Owner Only]" },
