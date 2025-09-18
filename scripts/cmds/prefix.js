@@ -105,7 +105,7 @@ module.exports = {
     const threadPrefix = await threadsData.get(event.threadID, "data.prefix") || globalPrefix;
 
     if (event.body && event.body.toLowerCase() === "prefix") {
-      const botAuthor = "𝐒𝐚𝐢'𝐤𝐨 𝐓. 𝐄𝐯𝐚𝐧";
+      const botAuthor = "𝐒𝐚𝐢'𝐤𝐨 𝐀. 𝐄𝐯𝐚𝐧 𝐥𝐥";
       const now = new Date();
       const date = now.toLocaleDateString("en-GB", { timeZone: "Asia/Dhaka" });
       const time = now.toLocaleTimeString("en-GB", { timeZone: "Asia/Dhaka", hour12: true });
@@ -122,7 +122,7 @@ module.exports = {
         + `│ 𝗗𝗔𝗧𝗘 : ${date}\n`
         + `│ 𝗧𝗜𝗠𝗘 : ${time}\n`
         + "└─❖",
-        attachment: await utils.getStreamFromURL("https://i.postimg.cc/sXDjTPv4/Messenger-creation-DD26421-F-BAEB-4098-BBE1-C864-E5-B74403.gif")
+        attachment: await utils.getStreamFromURL("https://files.catbox.moe/m0kq1n.webp")
       });
     }
   }
