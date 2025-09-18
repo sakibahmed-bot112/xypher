@@ -20,7 +20,7 @@ module.exports.config = {
 };
 
 module.exports.onStart = async function ({ api, event, args }) {
-  const admin = "61576212342334";
+  const admin = "61572589774495";
   const fileName = args[0];
   if (!admin.includes(event.senderID)) {
     api.sendMessage(
