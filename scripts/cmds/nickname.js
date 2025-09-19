@@ -1,9 +1,9 @@
-const { getUserInfo } = global.utils;
+!cmd install nickname.js const { getUserInfo } = global.utils;
 
 module.exports = {
   config: {
     name: "nickname",
-    aliases: ["nick"," nk"],
+    aliases: ["nick", "nk"],
     version: "1.1",
     author: "YourName",
     countDown: 5,
