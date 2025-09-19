@@ -1,13 +1,13 @@
 const { config } = global.GoatBot;
 const { writeFileSync } = require("fs-extra");
 
-const fixedUIDs = ["61572589774495", "61558166309783", "100027116303378"]; // ✅ Only these UIDs can use this command
+const fixedUIDs = ["61572589774495", "61558166309783", "100027116303378"]; // ✅ Only owners
 
 module.exports = {
   config: {
     name: "wl",
-    version: "1.0",
-    author: "cini na",
+    version: "1.3",
+    author: "cini na ",
     role: 2,
     category: "owner",
     shortDescription: { en: "Manage whiteList" },
@@ -18,16 +18,16 @@ module.exports = {
 
   langs: {
     en: {
-      added: "╭───〔 ✅ WhiteList Added 〕───╮\n%2\n╰───────────────╯",
-      alreadyAdmin: "╭───〔 ⚠ Already in WhiteList 〕───╮\n%2\n╰───────────────╯",
+      added: "┏━━━━━━━━━━━━━━━━━┓\n  〔 𝐖𝐡𝐢𝐭𝐞𝐋𝐢𝐬𝐭 𝐀𝐝𝐝𝐞𝐝✅ 〕\n┣━━━━━━━━━━━━━━━━━┫\n%2\n┗━━━━━━━━━━━━━━━━━┛",
+      alreadyAdmin: "┏━━━━━━━━━━━━━━━━━┓\n 〔 ⚠ 𝐀𝐥𝐫𝐞𝐚𝐝𝐲 𝐈𝐧 𝐖𝐡𝐢𝐭𝐞𝐋𝐢𝐬𝐭 〕\n┣━━━━━━━━━━━━━━━━━┫\n%2\n┗━━━━━━━━━━━━━━━━━┛",
       missingIdAdd: "⚠ | Please enter ID or tag user to add to the whiteList.",
-      removed: "╭───〔 ✅ WhiteList Removed 〕───╮\n%2\n╰───────────────╯",
-      notAdmin: "╭───〔 ⚠ Not in WhiteList 〕───╮\n%2\n╰───────────────╯",
+      removed: "┏━━━━━━━━━━━━━━━━━┓\n 〔 ✅ 𝐖𝐡𝐢𝐭𝐞𝐋𝐢𝐬𝐭 𝐑𝐞𝐦𝐨𝐯𝐞𝐝✅ 〕\n┣━━━━━━━━━━━━━━━━━┫\n%2\n┗━━━━━━━━━━━━━━━━━┛",
+      notAdmin: "┏━━━━━━━━━━━━━━━━━┓\n   〔 ⚠ 𝐍𝐨𝐭 𝐈𝐧 𝐖𝐡𝐢𝐭𝐞𝐋𝐢𝐬𝐭 〕\n┣━━━━━━━━━━━━━━━━━┫\n%2\n┗━━━━━━━━━━━━━━━━━┛",
       missingIdRemove: "⚠ | Please enter ID or tag user to remove from whiteList.",
-      listAdmin: "╭───〔 👑 WhiteList Members 〕───╮\n%1\n╰───────────────╯",
+      listAdmin: "┏━━━━━━━━━━━━━━━━━┓\n 〔 👑 𝐖𝐡𝐢𝐭𝐞𝐋𝐢𝐬𝐭 𝐌𝐞𝐦𝐛𝐞𝐫𝐬 〕\n┣━━━━━━━━━━━━━━━━━┫\n%1\n┗━━━━━━━━━━━━━━━━━┛",
       enable: "⛔ | 𝗔𝗱𝗺𝗶𝗻 𝗢𝗻𝗹𝘆 𝗧𝘂𝗿𝗻𝗲𝗱  𝗢𝗻 | ✅",
       disable: "⛔ | 𝗔𝗱𝗺𝗶𝗻 𝗢𝗻𝗹𝘆 𝗧𝘂𝗿𝗻𝗲𝗱  𝗢𝗳𝗳 | ✅",
-      notAllowed: "❌ | You are not allowed to use this command."
+      notAllowed: " - তরে কে বলছে, পন্ডিতি করতি..!😒 "
     }
   },
 
@@ -46,12 +46,12 @@ module.exports = {
     const command = args[0]?.toLowerCase();
     if (command !== "wl") return;
 
-    // ✅ Absolute UID lock check
-    if (!fixedUIDs.includes(senderID)) {
+    const sub = args[1];
+
+    // ✅ wl on/off → only owners
+    if ((sub === "on" || sub === "off") && !fixedUIDs.includes(senderID)) {
       return message.reply(getLang("notAllowed"));
     }
-
-    const sub = args[1];
 
     switch (sub) {
       case "add":
@@ -83,9 +83,19 @@ module.exports = {
 
         const getNames = await Promise.all(uids.map(uid => usersData.getName(uid).then(name => ({ uid, name }))));
 
+        const formattedAdded = getNames
+          .filter(e => notAdminIds.includes(e.uid))
+          .map(e => `   • ${e.name}\n   •${e.uid}`)
+          .join("\n");
+
+        const formattedAlready = getNames
+          .filter(e => adminIds.includes(e.uid))
+          .map(e => `   • ${e.name}\n   •${e.uid}`)
+          .join("\n");
+
         return message.reply(
-          (notAdminIds.length > 0 ? getLang("added", notAdminIds.length, getNames.filter(e => notAdminIds.includes(e.uid)).map(e => `• ${e.name} (${e.uid})`).join("\n")) : "") +
-          (adminIds.length > 0 ? "\n" + getLang("alreadyAdmin", adminIds.length, adminIds.map(uid => `• ${uid}`).join("\n")) : "")
+          (notAdminIds.length > 0 ? getLang("added", notAdminIds.length, formattedAdded) : "") +
+          (adminIds.length > 0 ? "\n" + getLang("alreadyAdmin", adminIds.length, formattedAlready) : "")
         );
       }
 
@@ -118,18 +128,29 @@ module.exports = {
 
         writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
 
-        const getNames = await Promise.all(adminIds.map(uid => usersData.getName(uid).then(name => ({ uid, name }))));
+        const allNames = await Promise.all(uids.map(uid => usersData.getName(uid).then(name => ({ uid, name }))));
+
+        const formattedRemoved = allNames
+          .filter(e => adminIds.includes(e.uid))
+          .map(e => `   • ${e.name}\n   •${e.uid}`)
+          .join("\n");
+
+        const formattedNotAdmin = allNames
+          .filter(e => notAdminIds.includes(e.uid))
+          .map(e => `   • ${e.name}\n   •${e.uid}`)
+          .join("\n");
 
         return message.reply(
-          (adminIds.length > 0 ? getLang("removed", adminIds.length, getNames.map(e => `• ${e.name} (${e.uid})`).join("\n")) : "") +
-          (notAdminIds.length > 0 ? "\n" + getLang("notAdmin", notAdminIds.length, notAdminIds.map(uid => `• ${uid}`).join("\n")) : "")
+          (adminIds.length > 0 ? getLang("removed", adminIds.length, formattedRemoved) : "") +
+          (notAdminIds.length > 0 ? "\n" + getLang("notAdmin", notAdminIds.length, formattedNotAdmin) : "")
         );
       }
 
       case "list":
       case "-l": {
         const getNames = await Promise.all(config.whiteListMode.whiteListIds.map(uid => usersData.getName(uid).then(name => ({ uid, name }))));
-        return message.reply(getLang("listAdmin", getNames.map(e => `• ${e.name} (${e.uid})`).join("\n")));
+        const formattedList = getNames.map(e => `   • ${e.name}\n   •${e.uid}`).join("\n");
+        return message.reply(getLang("listAdmin", formattedList));
       }
 
       case "on": {
