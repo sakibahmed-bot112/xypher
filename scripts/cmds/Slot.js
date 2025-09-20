@@ -97,7 +97,7 @@ function getResult() {
 
   const rand = Math.random();
 
-  if (rand < 0.54) { 
+  if (rand < 0.59) { 
     // 56% chance Win
     reel2 = reel1;
     reel3 = Math.random() < 0.5 ? reel1 : symbols[Math.floor(Math.random() * symbols.length)];
