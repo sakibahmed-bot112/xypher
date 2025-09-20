@@ -82,6 +82,19 @@ async function drawEmoji(ctx, x, y, emoji, size = 70) {
   ctx.drawImage(img, x - size / 2, y - size / 2, size, size);
 }
 
+// --- Shorten Number Helper ---
+const units = ["", "k", "m", "b", "t", "q", "Q", "s", "S", "o", "n", "d"];
+function shortenNumber(num) {
+  if (num < 1000) return num.toString();
+  let unitIndex = 0;
+  let n = num;
+  while (n >= 1000 && unitIndex < units.length - 1) {
+    n /= 1000;
+    unitIndex++;
+  }
+  return n.toFixed(1).replace(/\.0$/, "") + units[unitIndex];
+}
+
 // --- Game Functions ---
 function getResult() {
   const reel1 = weightedReelStrips[0][Math.floor(Math.random() * weightedReelStrips[0].length)];
@@ -241,7 +254,7 @@ module.exports = {
 
         if (i === frameCount - 1) {
           ctx.fillStyle = winnings > 0 ? "#4ade80" : "#ef4444";
-          ctx.font = "bold 28px Arial";
+          ctx.font = "bold 30px Arial";
           if (winType === "JACKPOT") {
             ctx.fillText(`JACKPOT! ${result.join(" ")}`, canvasWidth / 2, 320);
           } else if (winType === "DOUBLE") {
@@ -252,9 +265,13 @@ module.exports = {
 
           if (winnings > 0) {
             ctx.fillStyle = "#ffcc00";
-            ctx.font = "bold 24px Arial";
-            ctx.fillText(`You won $${winnings.toLocaleString()}!`, canvasWidth / 2, 360);
+            ctx.font = "bold 26px Arial";
+            ctx.fillText(`You won : $${shortenNumber(winnings)}!`, canvasWidth / 2, 360);
           }
+
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "bold 21px Arial";
+          ctx.fillText(`Bet: $${shortenNumber(betAmount)} | Balance: $${shortenNumber(userData.money)}`, canvasWidth / 2, 390);
         }
 
         encoder.addFrame(ctx);
@@ -268,7 +285,7 @@ module.exports = {
       await new Promise((res) => gifStream.on("finish", res));
 
       let resultMessage = `🎰 Slot Result 🎰\n`;
-      resultMessage += `Bet: $${betAmount.toLocaleString()}\n`;
+      resultMessage += `Bet: $${shortenNumber(betAmount)}\n`;
       resultMessage += `Result: ${result.join(" ")}\n`;
 
       if (winType === "JACKPOT") {
@@ -280,10 +297,10 @@ module.exports = {
       }
 
       if (winnings > 0) {
-        resultMessage += `You won $${winnings.toLocaleString()}!\n`;
+        resultMessage += `You won : $${shortenNumber(winnings)}!\n`;
       }
 
-      resultMessage += `New balance: $${userData.money.toLocaleString()}`;
+      resultMessage += `New balance: $${shortenNumber(userData.money)}`;
 
       await message.reply({
         body: resultMessage,
