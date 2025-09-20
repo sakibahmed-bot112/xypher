@@ -100,7 +100,7 @@ function getResult() {
   if (rand < 0.59) { 
     // 56% chance Win
     reel2 = reel1;
-    reel3 = Math.random() < 0.5 ? reel1 : symbols[Math.floor(Math.random() * symbols.length)];
+    reel3 = Math.random() < 0.2 ? reel1 : symbols[Math.floor(Math.random() * symbols.length)];
   } else {
     // 44% chance Loss
     reel2 = weightedReelStrips[1][Math.floor(Math.random() * weightedReelStrips[1].length)];
