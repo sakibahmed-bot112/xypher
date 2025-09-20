@@ -25,11 +25,6 @@ const payouts = {
   "7️⃣7️⃣": 10,
 };
 
-// --- Normalize helper ---
-function normalizeEmoji(e) {
-  return twemoji.convert.toCodePoint(e, "-");
-}
-
 // --- Weighted Reels ---
 function generateWeightedReelStrip() {
   const weights = {
@@ -92,7 +87,7 @@ function shortenNumber(num) {
     n /= 1000;
     unitIndex++;
   }
-  return n.toFixed(1).replace(/\.0$/, "") + units[unitIndex];
+  return n.toFixed(2).replace(/\.?0+$/, "") + units[unitIndex];
 }
 
 // --- Game Functions ---
@@ -102,12 +97,12 @@ function getResult() {
 
   const rand = Math.random();
 
-  if (rand < 0.59) { 
-    // 59% chance Win
+  if (rand < 0.56) { 
+    // 56% chance Win
     reel2 = reel1;
     reel3 = Math.random() < 0.5 ? reel1 : symbols[Math.floor(Math.random() * symbols.length)];
   } else {
-    // 41% chance Loss
+    // 44% chance Loss
     reel2 = weightedReelStrips[1][Math.floor(Math.random() * weightedReelStrips[1].length)];
     reel3 = weightedReelStrips[2][Math.floor(Math.random() * weightedReelStrips[2].length)];
   }
@@ -137,7 +132,7 @@ module.exports = {
   config: {
     name: "slot",
     aliases: ["slots"],
-    version: "3.2",
+    version: "3.3",
     author: "TawsiN",
     role: 0,
     shortDescription: { en: "Play the slot machine" },
@@ -261,6 +256,9 @@ module.exports = {
             ctx.fillText(`DOUBLE! ${result.join(" ")}`, canvasWidth / 2, 320);
           } else {
             ctx.fillText("NO WIN", canvasWidth / 2, 320);
+            ctx.fillStyle = "#ef4444";
+            ctx.font = "bold 26px Arial";
+            ctx.fillText(`You loss : $${shortenNumber(betAmount)}`, canvasWidth / 2, 360);
           }
 
           if (winnings > 0) {
@@ -293,7 +291,8 @@ module.exports = {
       } else if (winType === "DOUBLE") {
         resultMessage += `DOUBLE! Two symbols!\n`;
       } else {
-        resultMessage += `No winning combination.\n`;
+        resultMessage += `No wining combination\n`;
+        resultMessage += `You loss : $${shortenNumber(betAmount)}\n`;
       }
 
       if (winnings > 0) {
