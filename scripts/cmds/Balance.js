@@ -1,273 +1,336 @@
+const { createCanvas, loadImage } = require("canvas");
 const fs = require("fs");
 const path = require("path");
-const os = require("os");
-const axios = require("axios");
-const { createCanvas, loadImage } = require("canvas");
-
-// ---- Math Bold Converter ----
-function toMathBold(input) {
-  const A = "A".codePointAt(0), a = "a".codePointAt(0), ZERO = "0".codePointAt(0);
-  const BOLD_A = 0x1D400, BOLD_a = 0x1D41A, BOLD_0 = 0x1D7CE;
-  let out = "";
-  for (const ch of input) {
-    const cp = ch.codePointAt(0);
-    if (cp >= 65 && cp <= 90) out += String.fromCodePoint(BOLD_A + (cp - A));
-    else if (cp >= 97 && cp <= 122) out += String.fromCodePoint(BOLD_a + (cp - a));
-    else if (cp >= 48 && cp <= 57) out += String.fromCodePoint(BOLD_0 + (cp - ZERO));
-    else out += ch;
-  }
-  return out;
-}
 
 module.exports = {
   config: {
-    name: "bal",
-    aliases: ["balance", "b"],
-    version: "2.2",
-    author: "Muzan",
+    name: "balance",
+    aliases: ["bal"],
+    version: "1.9",
+    author: "asif",
+    countDown: 5,
     role: 0,
-    shortDescription: "Show user balance with styled glowing border",
-    category: "economy",
-    cooldown: 5
+    shortDescription: "Show balance card / Transfer money",
+    category: "bank",
+    guide: "{pn}\n{pn} transfer <uid|@mention> <amount>\n{pn} (as reply to a user)"
   },
 
-  onStart: async function ({ event, message, usersData, args }) {
+  onStart: async function ({ api, event, args, usersData }) {
     try {
-      if (args[0] && args[0].toLowerCase() === "top") {
-        return await showTop(message, usersData);
+      let userID = event.senderID.toString();
+
+      // === If message is a reply ===
+      if (event.type === "message_reply" && !args[0]) {
+        userID = event.messageReply.senderID.toString();
       }
 
-      const interestRate = 0.01;
-      const now = Date.now();
+      const userInfo = (usersData && (await usersData.get(userID))) || {};
+      const userName = userInfo.name || "Unknown User";
 
-      let userId = event.senderID;
-      if (args[0] && /^\d+$/.test(args[0])) userId = args[0];
-      else if (Object.keys(event.mentions)[0]) userId = Object.keys(event.mentions)[0];
-      else if (event.type === "message_reply") userId = event.messageReply.senderID;
+      // === Balance Transfer Feature ===
+      if (args[0] && args[0].toLowerCase() === "transfer") {
+        if (args.length < 2) {
+          return api.sendMessage(
+            `⚠️ Usage: ${this.config.name} transfer <uid|@mention> <amount>`,
+            event.threadID,
+            event.messageID
+          );
+        }
 
-      const restrictedUids = ["100080195076753"];
-      if (restrictedUids.includes(userId) && userId !== event.senderID)
-        return message.reply(" You can't access this user's account.");
+        let receiverID = null;
+        let receiverName = null;
 
-      let userData = await usersData.get(userId);
-      if (!userData.data.bank) {
-        userData.data.bank = { balance: 0, lastInterest: now };
-        await usersData.set(userId, { data: userData.data });
+        if (event.mentions && Object.keys(event.mentions).length > 0) {
+          receiverID = Object.keys(event.mentions)[0];
+          receiverName = event.mentions[receiverID] || null;
+        } else if (args[1]) {
+          const possibleId = String(args[1]).replace(/[^0-9]/g, "");
+          if (possibleId) receiverID = possibleId;
+        }
+
+        let amountArgIndex = 2;
+        if (event.mentions && Object.keys(event.mentions).length > 0) {
+          let foundAmount = null;
+          for (let i = 1; i < args.length; i++) {
+            if (/^\d+$/.test(args[i])) {
+              foundAmount = args[i];
+              break;
+            }
+          }
+          if (foundAmount) {
+            amountArgIndex = args.indexOf(foundAmount);
+          } else {
+            amountArgIndex = 1;
+          }
+        }
+
+        const amount = parseInt(args[amountArgIndex]);
+
+        if (!receiverID) {
+          return api.sendMessage("❌ Receiver not found. Provide UID or mention someone.", event.threadID, event.messageID);
+        }
+
+        if (isNaN(amount) || amount <= 0) {
+          return api.sendMessage("❌ Invalid amount.", event.threadID, event.messageID);
+        }
+
+        const senderBalance = (await usersData.get(event.senderID, "money")) || 0;
+        if (senderBalance < amount) {
+          return api.sendMessage("💸 Insufficient balance.", event.threadID, event.messageID);
+        }
+
+        const receiverInfo = (await usersData.get(receiverID)) || {};
+        receiverName = receiverName || receiverInfo.name || "Unknown User";
+
+        await usersData.set(event.senderID, { money: senderBalance - amount });
+        const receiverBalance = (await usersData.get(receiverID, "money")) || 0;
+        await usersData.set(receiverID, { money: receiverBalance + amount });
+
+        const mentionData = [
+          {
+            id: receiverID,
+            tag: receiverName
+          }
+        ];
+
+        return api.sendMessage(
+          {
+            body: `✅ ${userName} sent balance  $${amount} to ${receiverName} \n📉 New Balance: $${senderBalance - amount}`,
+            mentions: mentionData
+          },
+          event.threadID,
+          event.messageID
+        );
       }
 
-      const elapsed = now - userData.data.bank.lastInterest;
-      if (elapsed >= 3600000) {
-        const hours = Math.floor(elapsed / 3600000);
-        const interest = Math.floor(userData.data.bank.balance * interestRate * hours);
-        if (interest > 0) userData.data.bank.balance += interest;
-        userData.data.bank.lastInterest = now;
-        await usersData.set(userId, { data: userData.data });
+      // === Balance Card Section ===
+      let balance = (await usersData.get(userID, "money")) || 0;
+
+      function formatBalance(num) {
+        const units = ["", "k", "m", "b", "t", "q", "Q", "s", "S", "o", "n", "d"];
+        let i = 0;
+        while (num >= 1000 && i < units.length - 1) {
+          num /= 1000;
+          i++;
+        }
+        return num.toFixed(2) + units[i];
       }
 
-      // Deposit
-      if (args[0] && ["deposit", "dep"].includes(args[0].toLowerCase())) {
-        if (!args[1]) return message.reply("💰 Enter amount to deposit.");
-        let amount = parseAmount(args[1], userData.money);
-        if (amount <= 0) return message.reply("❌ Invalid amount.");
-        if (amount > userData.money) return message.reply("❌ Not enough money in wallet.");
-        userData.money -= amount;
-        userData.data.bank.balance += amount;
-        await usersData.set(userId, { money: userData.money, data: userData.data });
-        return message.reply(`✅ Deposited $${formatMoney(amount)} into bank.`);
+      const width = 1400;
+      const height = 760;
+      const canvas = createCanvas(width, height);
+      const ctx = canvas.getContext("2d");
+
+      function roundedRectPath(ctx, x, y, w, h, r) {
+        const rr = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + rr, y);
+        ctx.arcTo(x + w, y, x + w, y + h, rr);
+        ctx.arcTo(x + w, y + h, x, y + h, rr);
+        ctx.arcTo(x, y + h, x, y, rr);
+        ctx.arcTo(x, y, x + w, y, rr);
+        ctx.closePath();
       }
 
-      // Withdraw
-      if (args[0] && ["withdraw", "with"].includes(args[0].toLowerCase())) {
-        if (!args[1]) return message.reply("💰 Enter amount to withdraw.");
-        let amount = parseAmount(args[1], userData.data.bank.balance);
-        if (amount <= 0) return message.reply("❌ Invalid amount.");
-        if (amount > userData.data.bank.balance) return message.reply("❌ Not enough money in bank.");
-        userData.data.bank.balance -= amount;
-        userData.money += amount;
-        await usersData.set(userId, { money: userData.money, data: userData.data });
-        return message.reply(`✅ Withdrew $${formatMoney(amount)} into wallet.`);
-      }
+      // background
+      const g = ctx.createLinearGradient(0, 0, 0, height);
+      g.addColorStop(0, "#0b1338");
+      g.addColorStop(1, "#081033");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, width, height);
 
-      userData = await usersData.get(userId);
-      const name = (await usersData.getName(userId)) || "Unknown";
-      const wallet = userData.money || 0;
-      const bank = userData.data.bank.balance || 0;
-      const biscuits = userData.data.biscuit || 0;
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = "#ffd400";
+      ctx.lineJoin = "round";
+      roundedRectPath(ctx, 12, 12, width - 24, height - 24, 22);
+      ctx.stroke();
 
-      let avatarBuffer;
+      ctx.save();
+      roundedRectPath(ctx, 28, 28, width - 56, 120, 18);
+      ctx.clip();
+      const hdrGrad = ctx.createLinearGradient(0, 28, 0, 148);
+      hdrGrad.addColorStop(0, "rgba(40,35,35,0.46)");
+      hdrGrad.addColorStop(1, "rgba(30,28,28,0.18)");
+      ctx.fillStyle = hdrGrad;
+      ctx.fillRect(28, 28, width - 56, 120);
+      ctx.restore();
+
+      ctx.fillStyle = "#ffd400";
+      ctx.font = "bold 56px Sans";
+      ctx.textBaseline = "middle";
+      ctx.fillText("USER BALANCE INFO", 60, 80);
+
+      const badgeX = width - 420;
+      const badgeY = 40;
+      const badgeW = 360;
+      const badgeH = 80;
+      ctx.save();
+      ctx.shadowColor = "#00faff";
+      ctx.shadowBlur = 28;
+      roundedRectPath(ctx, badgeX, badgeY, badgeW, badgeH, 8);
+      ctx.fillStyle = "#00faff";
+      ctx.fill();
+      ctx.restore();
+
+      ctx.fillStyle = "#002428";
+      ctx.font = "700 29px Sans";
+      ctx.textBaseline = "middle";
+      ctx.fillText("DIAMOND MEMBER", badgeX + 20, badgeY + badgeH / 2 + 2);
+
+      const avatarCenterX = 160;
+      const avatarCenterY = 280;
+      const avatarRadius = 110;
       try {
-        const avatarUrl = await usersData.getAvatarUrl(userId);
-        const response = await axios.get(avatarUrl, { responseType: "arraybuffer" });
-        avatarBuffer = response.data;
-      } catch {
-        avatarBuffer = await generateDefaultAvatar(name);
+        const avatarURL = `https://graph.facebook.com/${userID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
+        const avatarImg = await loadImage(avatarURL);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(avatarCenterX, avatarCenterY, avatarRadius, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(
+          avatarImg,
+          avatarCenterX - avatarRadius,
+          avatarCenterY - avatarRadius,
+          avatarRadius * 2,
+          avatarRadius * 2
+        );
+        ctx.restore();
+      } catch (e) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(avatarCenterX, avatarCenterY, avatarRadius, 0, Math.PI * 2);
+        ctx.fillStyle = "#2a2a2a";
+        ctx.fill();
+        ctx.restore();
+
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 48px Sans";
+        ctx.textBaseline = "middle";
+        const initials = userName
+          .split(" ")
+          .map((s) => s[0])
+          .slice(0, 2)
+          .join("")
+          .toUpperCase() || "?";
+        ctx.fillText(
+          initials,
+          avatarCenterX - ctx.measureText(initials).width / 2,
+          avatarCenterY
+        );
       }
 
-      const cardImage = await renderCard(name, wallet, bank, biscuits, avatarBuffer);
-      const filePath = path.join(os.tmpdir(), `${userId}_bal.png`);
-      fs.writeFileSync(filePath, cardImage);
+      ctx.beginPath();
+      ctx.arc(avatarCenterX, avatarCenterY, avatarRadius + 6, 0, Math.PI * 2);
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = "#ffd400";
+      ctx.stroke();
 
-      message.reply(
-        { body: ` ${toMathBold(name)}'s Balance`, attachment: fs.createReadStream(filePath) },
-        () => { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); }
+      const nameX = 330;
+      const nameY = 230;
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "700 48px Sans";
+      ctx.textBaseline = "alphabetic";
+      ctx.fillText(userName, nameX, nameY);
+
+      ctx.font = "30px Sans";
+      ctx.fillStyle = "#bdbdbd";
+      ctx.fillText(`ID: ${userID}`, nameX, nameY + 48);
+
+      ctx.font = "38px Sans";
+      ctx.fillStyle = "#e8e8e8";
+      const cardLast4 = userID.slice(-4);
+      const maskedCard = "•••• •••• •••• " + (cardLast4 || "0000");
+      ctx.fillText(maskedCard, nameX, nameY + 104);
+
+      const now = new Date();
+      const expMonth = String(now.getMonth() + 1).padStart(2, "0");
+      const expYear = String((now.getFullYear() + 3) % 100).padStart(2, "0");
+      const validThru = `  : ${expMonth}/${expYear}`;
+
+      ctx.font = "26px Sans";
+      ctx.fillStyle = "#cfcfcf";
+      ctx.fillText("VALID THRU", nameX, nameY + 162);
+      ctx.font = "30px Sans";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(validThru, nameX + 150, nameY + 162);
+
+      const chipX = width - 220;
+      const chipY = 230;
+      ctx.fillStyle = "#ffd54f";
+      roundedRectPath(ctx, chipX, chipY, 80, 60, 8);
+      ctx.fill();
+
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#00ff88";
+      ctx.beginPath();
+      ctx.arc(chipX + 110, chipY + 30, 10, -1.1, 1.1);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(chipX + 110, chipY + 30, 18, -1.1, 1.1);
+      ctx.stroke();
+
+      const balBoxX = 60;
+      const balBoxY = 490;
+      const balBoxW = width - 120;
+      const balBoxH = 130;
+      ctx.save();
+      ctx.shadowColor = "#000";
+      ctx.shadowBlur = 18;
+      ctx.globalAlpha = 0.85;
+      roundedRectPath(ctx, balBoxX, balBoxY, balBoxW, balBoxH, 18);
+      ctx.fillStyle = "rgba(18,18,25,0.45)";
+      ctx.fill();
+      ctx.restore();
+
+      const labelX = balBoxX + 30;
+      const labelY = balBoxY + 30;
+      ctx.font = "bold 30px Sans";
+      ctx.fillStyle = "#bdbdbd";
+      ctx.fillText("AVAILABLE BALANCE", labelX, labelY);
+
+      const amountX = labelX;
+      const amountY = balBoxY + 110;
+      ctx.font = "bold 72px Sans";
+      ctx.textBaseline = "alphabetic";
+      ctx.save();
+      ctx.shadowColor = "#00ff88";
+      ctx.shadowBlur = 36;
+      ctx.fillStyle = "#14ff8a";
+      const amtText = `$${formatBalance(balance)}`;
+      ctx.fillText(amtText, amountX, amountY);
+      ctx.restore();
+
+      const footerH = 54;
+      ctx.fillStyle = "#00ff88";
+      ctx.fillRect(28, height - footerH - 28, width - 56, footerH);
+
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.font = "22px Sans";
+      const footerText = "Elon Bank • Secure Digital Banking • 24/7 Support";
+      const footerWidth = ctx.measureText(footerText).width;
+      ctx.fillText(footerText, (width - footerWidth) / 2, height - footerH / 2 - 18);
+
+      const outPath = path.join(__dirname, `balance_${userID}.png`);
+      const buffer = canvas.toBuffer("image/png");
+      fs.writeFileSync(outPath, buffer);
+
+      api.sendMessage(
+        {
+          body: `💳 USER BALANCE INFO\n\n👤 Name:   ${userName}\n🆔 UID:   ${userID}\n💰 Balance:   $${formatBalance(balance)}\n📅 Valid Thru:   ${expMonth}/${expYear}\n\n🏦 Personal Bank`,
+          attachment: fs.createReadStream(outPath)
+        },
+        event.threadID,
+        () => {
+          try {
+            fs.unlinkSync(outPath);
+          } catch (e) {}
+        },
+        event.messageID
       );
-
     } catch (err) {
       console.error(err);
-      message.reply("❌ Error while processing balance.");
+      api.sendMessage("Error while generating balance card.", event.threadID);
     }
   }
 };
-
-async function showTop(message, usersData) {
-  const allUsers = await usersData.getAll();
-  const sorted = allUsers
-    .map(u => ({
-      name: u.name || "Unknown",
-      total: (u.money || 0) + ((u.data?.bank?.balance) || 0)
-    }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 10);
-
-  let msg = " Top 10 Richest Users \n\n";
-  sorted.forEach((u, i) => msg += `${i + 1}. ${toMathBold(u.name)} — $${formatMoney(u.total)}\n`);
-  message.reply(msg);
-}
-
-// ✅ parseAmount with k,m,b,t...
-function parseAmount(input, max) {
-  input = input.toLowerCase();
-  if (input === "all") return max;
-  const match = input.match(/^([\d.]+)([kmbtqQsoNd])?$/i);
-  if (!match) return NaN;
-  let [, num, unit] = match;
-  num = parseFloat(num);
-
-  const multipliers = {
-    k: 1e3, m: 1e6, b: 1e9, t: 1e12,
-    q: 1e15, Q: 1e18, s: 1e21, S: 1e24,
-    o: 1e27, n: 1e30, d: 1e33
-  };
-
-  if (unit && multipliers[unit]) num *= multipliers[unit];
-  return num;
-}
-
-// ✅ formatMoney with shortcuts
-function formatMoney(num) {
-  if (num < 1000) return num.toString();
-  const units = ["", "k", "m", "b", "t", "q", "Q", "s", "S", "o", "n", "d"];
-  let i = 0;
-  while (num >= 1000 && i < units.length - 1) {
-    num /= 1000;
-    i++;
-  }
-  return `${parseFloat(num.toFixed(2))}${units[i]}`;
-}
-
-async function generateDefaultAvatar(name = "?") {
-  const canvas = createCanvas(200, 200);
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#777";
-  ctx.beginPath();
-  ctx.arc(100, 100, 100, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "#fff";
-  ctx.font = "bold 90px Arial";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(name[0].toUpperCase(), 100, 110);
-  return canvas.toBuffer("image/png");
-}
-
-async function renderCard(name, wallet, bank, biscuits, avatarBuffer) {
-  const width = 1000, height = 500;
-  const canvas = createCanvas(width, height);
-  const ctx = canvas.getContext("2d");
-
-  ctx.fillStyle = "#0f172a";
-  ctx.fillRect(0, 0, width, height);
-
-  const borderWidth = 15;
-  ctx.lineWidth = borderWidth;
-  const gradient = ctx.createLinearGradient(0, 0, width, height);
-  gradient.addColorStop(0, "#00c8ff");
-  gradient.addColorStop(1, "#00ff88");
-  ctx.strokeStyle = gradient;
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 40;
-  ctx.strokeRect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth);
-  ctx.shadowBlur = 0;
-
-  const centerX = 185, centerY = 180, radius = 90;
-  try {
-    const avatar = await loadImage(avatarBuffer);
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
-    ctx.drawImage(avatar, centerX - radius, centerY - radius, radius * 2, radius * 2);
-    ctx.restore();
-  } catch {}
-
-  const strokeGradient = ctx.createLinearGradient(centerX - radius, centerY, centerX + radius, centerY);
-  strokeGradient.addColorStop(0, "#00BFFF");
-  strokeGradient.addColorStop(1, "#90EE90");
-  ctx.save();
-  ctx.strokeStyle = strokeGradient;
-  ctx.lineWidth = 8;
-  ctx.shadowColor = "#00FFFF";
-  ctx.shadowBlur = 25;
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, radius + 8, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.restore();
-
-  ctx.font = "bold 50px Arial";
-  ctx.fillStyle = "#00e6ff";
-  ctx.shadowColor = "#00f7ff";
-  ctx.shadowBlur = 25;
-  ctx.fillText(toMathBold(name), 350, 150);
-  ctx.shadowBlur = 0;
-
-  // ---- use short formatted money here ----
-  ctx.font = "bold 40px Arial";
-  ctx.fillStyle = "#00ffcc";
-  ctx.shadowColor = "#00ffcc";
-  ctx.shadowBlur = 20;
-  ctx.fillText(toMathBold(`Wallet: ${formatMoney(wallet)}`), 350, 250);
-  ctx.fillText(toMathBold(`Bank: ${formatMoney(bank)}`), 350, 310);
-  ctx.fillText(toMathBold(`Biscuits: ${formatMoney(biscuits)}`), 350, 370);
-  ctx.shadowBlur = 0;
-
-  const totalWealth = wallet + bank;
-  const maxWealth = 100000;
-  const barWidth = Math.min((totalWealth / maxWealth) * 600, 600);
-  ctx.fillStyle = "#ffb347";
-  ctx.fillRect(280, 410, barWidth, 30);
-  ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(280, 410, 600, 30);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "20px Arial";
-  ctx.fillText("Wealth Level", 520, 430);
-
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "18px Arial";
-  ctx.fillText("Premium Balance Card", 700, 470);
-
-  for (let i = 0; i < 180; i++) {
-    const x = Math.random() * canvas.width;
-    const y = Math.random() * canvas.height;
-    const len = Math.random() * 20 + 10;
-    ctx.strokeStyle = "rgba(173,216,230,0.4)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + 2, y + len);
-    ctx.stroke();
-  }
-
-  return canvas.toBuffer("image/png");
-          }
