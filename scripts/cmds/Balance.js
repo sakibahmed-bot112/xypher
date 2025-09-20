@@ -107,7 +107,7 @@ module.exports = {
       let balance = (await usersData.get(userID, "money")) || 0;
 
       function formatBalance(num) {
-        const units = ["", "k", "m", "b", "t", "q", "Q", "s", "S", "o", "n", "d"];
+        const units = ["", "K", "M", "B", "T", "Q", "S", "O", "N", "D"];
         let i = 0;
         while (num >= 1000 && i < units.length - 1) {
           num /= 1000;
