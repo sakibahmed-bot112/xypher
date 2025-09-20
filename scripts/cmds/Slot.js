@@ -83,7 +83,7 @@ async function drawEmoji(ctx, x, y, emoji, size = 70) {
 }
 
 // --- Shorten Number Helper ---
-const units = ["", "k", "m", "b", "t", "q", "Q", "s", "S", "o", "n", "d"];
+const units = ["", "K", "M", "B", "T", "Q", "S", "O", "N", "D"];
 function shortenNumber(num) {
   if (num < 1000) return num.toString();
   let unitIndex = 0;
@@ -271,7 +271,7 @@ module.exports = {
 
           ctx.fillStyle = "#ffffff";
           ctx.font = "bold 21px Arial";
-          ctx.fillText(`Bet: $${shortenNumber(betAmount)} | Balance: $${shortenNumber(userData.money)}`, canvasWidth / 2, 390);
+          ctx.fillText(`Bet: $${shortenNumber(betAmount)}  |  Balance: $${shortenNumber(userData.money)}`, canvasWidth / 2, 390);
         }
 
         encoder.addFrame(ctx);
