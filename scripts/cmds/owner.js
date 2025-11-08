@@ -6,7 +6,7 @@ module.exports = {
   config: {
     name: "owner",
     version: "2.1",
-    author: "Asif",
+    author: "eden",
     shortDescription: "Galaxy styled owner card with colored borders and owner image.",
     longDescription: "Premium owner info image card with background stars, color borders, and bottom-right owner photo.",
     category: "ℹ️ Info",
@@ -16,14 +16,14 @@ module.exports = {
 
   onStart: async function ({ api, event }) {
     const owner = {
-      name: "𝗔𝗵𝗺𝗲𝗗'𝘇  𝗘𝘃𝗮𝗻",
-      whatsapp: "0133**98714",
-      botName: "𝗘𝗹𝗼𝗻 𝗧𝗲𝗻",
-      nickName: "𝗔𝘀𝗶𝗳",
-      class: "𝗜𝗻𝘁𝗲𝗿 2𝗻𝗱 𝗬𝗲𝗮𝗿",
-      religion: "𝗜𝘀𝗹𝗮𝗺",
-      relationship: "𝗦𝗶𝗻𝗴𝗹𝗲",
-      address: "𝗡𝗲𝘁𝗿𝗮𝗸𝗼𝗻𝗮"
+      name: "MUNTASIR MAHMUD",
+      whatsapp: "N/A",
+      botName: "TOP SHELBY",
+      nickName: "EDEN",
+      class: "N/A",
+      religion: "ISLAM",
+      relationship: "MINGLE",
+      address: "RAJSHAHI"
     };
 
     const width = 800, height = 500;
@@ -134,7 +134,7 @@ module.exports = {
         img = new Image();
         img.src = imgBuffer;
       } else {
-        img = await loadImage("https://files.catbox.moe/aiy3ta.jpg");
+        img = await loadImage("https://files.catbox.moe/pahtuw.jpg");
       }
 
       const photoW = 140, photoH = 140;
