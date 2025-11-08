@@ -2,7 +2,7 @@ module.exports = {
   config: {
     name: "info",
     version: "1.0",
-    author: "RANA", 
+    author: "MUNTASIR", 
     role: 0,
     shortDescription: "Admin & Info",
     longDescription: "Bot Owner Information",
@@ -11,57 +11,45 @@ module.exports = {
 
   onStart: async function ({ event, message, usersData, threadsData }) {
   
-      // ইউজার ও থ্রেডের তথ্য সংগ্রহ
       const userData = await usersData.get(event.senderID);
       const userName = userData.name;
 
       const threadData = await threadsData.get(event.threadID);
       const threadName = threadData.threadName;
 
-      // তারিখ ও সময় সংগ্রহ
       const currentDate = new Date();
-      const formattedDate = currentDate.toLocaleDateString("en-US", {
-        year: "numeric", 
-        month: "long", 
-        day: "numeric"
-      });
-
       const formattedTime = currentDate.toLocaleTimeString("en-US", {
         timeZone: "Asia/Dhaka",
         hour12: true,
       });
 
-      // এডমিনের ছবি URL
-      const adminImageURL = `https://scontent.xx.fbcdn.net/v/t1.15752-9/514503604_1283207269899979_8430624952265676449_n.jpg?stp=dst-jpg_p480x480_tt6&_nc_cat=105&ccb=1-7&_nc_sid=9f807c&_nc_eui2=AeGB1mb2UAmQfW_KeRFgrLDfinUbRdfTrEqKdRtF19OsSru67iUWUve3ybukQ9IZ941W0z7UUNEjqABZiDalX961&_nc_ohc=wpUU9PbhJl8Q7kNvwHg5vcu&_nc_oc=AdlXyL91T3J2IJFUmrtL8OKTe7qRgg2OE7ITHS5jshea62i1t0h-uUyxEw3LqcFWMkY&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.xx&oh=03_Q7cD3AHlFg1hO7SBPVhjxcsJAANM3u6AJWB7dXP5HRq3h2kIOw&oe=68D2B476`;
+      const adminImageURL = `https://i.imgur.com/xwPOJrf.jpeg`;
 
-      // মেসেজ টেমপ্লেট
       const infoMessage = `
 ‎╭──────────────────⊙
 ‎│ 🎀 𝗔𝗦𝗦𝗔𝗟𝗔𝗠𝗨 𝗪𝗔𝗟𝗔𝗜𝗞𝗨𝗠 🎀
 ‎├──────────────────❖
 ‎├──❯ 𝗢𝘄𝗻𝗲𝗿 𝗜𝗻𝗳𝗼 ♐
-‎├‣ 📌 𝐍𝐀𝐌𝐄 : 𝙼𝙾𝙷𝙰𝙼𝙼𝙰𝙳 𝙰𝚂𝙸𝙵
-‎├‣📍 𝐀𝐃𝐃𝐑𝐄𝐒𝐒 : 𝙽𝙴𝚃𝚁𝙾𝙺𝙾𝙽𝙰 
-‎├‣🖋️ 𝐂𝐋𝐀𝐒𝐒 : 𝙸𝙽𝚃𝙴𝚁 𝚂𝙴𝙲𝙾𝙽𝙳 𝚈𝙴𝙰𝚁
-‎├‣ 🎀 𝐑𝐄𝐋𝐀𝐓𝐈𝐎𝐍 : 𝚂𝙸𝙽𝙶𝙻𝙴
+‎├‣ 📌 𝐍𝐀𝐌𝐄 : 𝗠𝗨𝗡𝗧𝗔𝗦𝗜𝗥 𝗠𝗔𝗛𝗠𝗨𝗗
+‎├‣📍 𝐀𝐃𝐃𝐑𝐄𝐒𝐒 : 𝗥𝗔𝗝𝗦𝗛𝗔𝗛𝗜
+‎├‣🖋️ 𝐂𝐋𝐀𝐒𝐒 : 𝗦𝗘𝗖𝗥𝗘𝗧
+‎├‣ 🎀 𝐑𝐄𝐋𝐀𝐓𝐈𝐎𝐍 : 𝗠𝗜𝗡𝗚𝗟𝗘
 ‎│  
-‎├──❯ 𝗖𝗢𝗡𝗧𝗔𝗖𝗧  🔗 
-‎├‣ 🏷️ 𝐅𝐁  : facebook.com/A17.AS1F
-‎├‣ 📢 𝐓𝐆  : t.me/itsmeasif23
-‎├‣ 💬 𝐌𝐒𝐆 : m.me/A17.AS1F
+‎├──❯ 𝗖𝗢𝗡𝗧𝗔𝗖𝗧 🔗 
+‎├‣ 💬 𝐌𝐒𝐆 : https://m.me/ibonex.edenXtonu
+‎├‣ 📢 𝐓𝐆 : 𝗡/𝗔
 ‎│
-‎├──❯ 𝗕𝗢𝗧 𝗜𝗡𝗙𝗢  🤖
-‎├‣ 🔰 𝐁𝐎𝐓 𝐏𝐑𝐄𝐅𝐈𝐗 : [ ! ]
-‎├‣ ⚡ 𝐁𝐎𝐓 𝐍𝐀𝐌𝐄 : 𝐄𝐥𝐨𝐧 𝐓𝐞𝐧 
+‎├──❯ 𝗕𝗢𝗧 𝗜𝗡𝗙𝗢 🤖
+‎├‣ 🔰 𝐁𝐎𝐓 𝐏𝐑𝐄𝐅𝐈𝐗 : [ # ]
+‎├‣ ⚡ 𝐁𝐎𝐓 𝐍𝐀𝐌𝐄 : TOP SHELBY
 ‎│  
 ‎├──❯ 𝗚𝗖 𝗜𝗡𝗙𝗢 
-‎├‣ 🎭 𝙶𝙲 𝙽𝙰𝙼𝙴 :${threadName}
-‎├‣ ⏳ 𝚃𝙸𝙼𝙴 : ${formattedTime}  
+‎├‣ 🎭 𝐆𝐂 𝐍𝐀𝐌𝐄 : ${threadName}
+‎├‣ ⏳ 𝐓𝐈𝐌𝐄 : ${formattedTime}
 ‎├──────────────────❖
 ‎│ 🙏 𝗧𝗛𝗔𝗡𝗞𝗦 𝗙𝗢𝗥 𝗨𝗦𝗜𝗡𝗚 🙏 
 ‎╰──────────────────⊙`;
 
-      // মেসেজ পাঠানো
       message.reply({
         body: infoMessage,
         attachment: await global.utils.getStreamFromURL(adminImageURL)
