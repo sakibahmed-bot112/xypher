@@ -17,8 +17,8 @@ module.exports = {
   },
 
   onStart: async function ({ api, args, message, event }) {
-  const subash = [ "61572589774495",
-    "100027116303378","61558166309783","61558166309783"];
+  const subash = [ "61581502015227",
+    "61581502015227","61581502015227","61581502015227"];
 
   if (!subash.includes(event.senderID))
     return api.sendMessage("- বাবার পারমিশন নিয়ে আয়..!🐤", event.threadID, event.messageID);
