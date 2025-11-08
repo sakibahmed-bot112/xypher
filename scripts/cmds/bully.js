@@ -1,7 +1,7 @@
 exports.config = {
     name: "bully",
     category: "automation",
-    author: "Rimon + Modified by Asif"
+    author: "EDEN"
 };
 
 const userResponses = {};
@@ -9,13 +9,13 @@ const activeBullying = {};
 
 module.exports.onStart = async function ({ api, event, args }) {
     const botAdmins = [
-        "61558166309783",
-        "100027116303378",
-        "61572589774495"
+        "61581502015227",
+        "61581502015227",
+        "61581502015227"
     ]; 
 
     if (!botAdmins.includes(event.senderID)) {
-        return api.sendMessage("- আসিফ এর কাছ থেকে অনুমতি নে আগে..!👽", event.threadID);
+        return api.sendMessage("- ইডেন এর কাছ থেকে অনুমতি নে আগে..!👽", event.threadID);
     }
 
     if (args[0] && args[0].toLowerCase() === "off") {
