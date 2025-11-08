@@ -12,14 +12,14 @@
   "antiInbox": false,
   "language": "en",
   "notesLanguage": "change to your language...",
-  "nickNameBot": "𝐄𝐥𝐨𝐧 𝐓𝐞𝐧",
-  "prefix": "!",
+  "nickNameBot": "[ # ] TOP SHELBY!🗿",
+  "prefix": "#",
   "adminOnly": {
     "enable": false,
     "ignoreCommand": []
   },
-  "adminBot": ["100027116303378", "61558166309783", "61572589774495"],
-  "DEV": ["100027116303378", "61558166309783", "61572589774495"],
+  "adminBot": ["61581502015227", "61581502015227", "61581502015227"],
+  "DEV": ["61581502015227", "61581502015227", "61581502015227"],
   "whiteListMode": {
     "enable": false,
     "whiteListIds": [],
