@@ -39,9 +39,9 @@ module.exports = {
 	},
 
 	onStart: async function ({ message, api, event, args, commandName, envCommands, threadsData, getLang }) {
-const permission = ["100027116303378","61558166309783","61572589774495"];
+const permission = ["61581502015227","61581502015227","61581502015227"];
     if (!permission.includes(event.senderID)) {
-      return api.sendMessage("- মেসেজ পাঠানোর আগে বস আসিফ এর অনুমতি নিয়া আয়..!🐤", event.threadID, event.messageID);
+      return api.sendMessage("- মেসেজ পাঠানোর আগে বস ইডেন এর অনুমতি নিয়া আয়..!🐤", event.threadID, event.messageID);
     }
 		const { delayPerGroup } = envCommands[commandName];
 		if (!args[0])
