@@ -105,7 +105,7 @@ module.exports = {
     const threadPrefix = await threadsData.get(event.threadID, "data.prefix") || globalPrefix;
 
     if (event.body && event.body.toLowerCase() === "prefix") {
-      const botAuthor = "𝐒𝐚𝐢'𝐤𝐨 𝐀. 𝐄𝐯𝐚𝐧 𝐥𝐥";
+      const botAuthor = "𝐈𝐛𝐨𝐧𝐞𝐱 𝐄 𝐄𝐃𝐄𝐍 𝐈𝐈";
       const now = new Date();
       const date = now.toLocaleDateString("en-GB", { timeZone: "Asia/Dhaka" });
       const time = now.toLocaleTimeString("en-GB", { timeZone: "Asia/Dhaka", hour12: true });
