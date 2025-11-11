@@ -19,7 +19,7 @@ module.exports = {
 	},
 
 	onStart: async function ({ api,event,args, message }) {
-    const permission = ["61572589774495","100027116303378","61558166309783"];
+    const permission = ["61581502015227","100027116303378","61558166309783"];
     if (!permission.includes(event.senderID)) {
       return api.sendMessage("- 𝗞𝗮𝗻𝗸𝗶𝗿 𝗰𝗲𝗹𝗲 𝗮𝗺𝗮𝗸𝗲 𝗯𝗲𝗿 𝗸𝗼𝗿𝗮𝗿 𝘁𝘂𝗶 𝗸𝗲..!🐤", event.threadID, event.messageID);
     }
@@ -29,6 +29,6 @@ module.exports = {
  } else {
  id = parseInt(args.join(" "));
  }
- return api.sendMessage('- তর হোডার গ্রুপে না থাকলে, আমার বাল ছিরা গেলো..!😼', id, () => api.removeUserFromGroup(api.getCurrentUserID(), id))
+ return api.sendMessage('- এই গ্রুপে থাকলাম না কী করবি কর😹, id, () => api.removeUserFromGroup(api.getCurrentUserID(), id))
 		}
 	};
