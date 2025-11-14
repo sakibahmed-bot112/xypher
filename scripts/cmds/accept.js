@@ -1,9 +1,9 @@
 const moment = require("moment-timezone");
 
 const adminUIDs = [
-  "61572589774495",
-  "61558166309783",
-  "100027116303378"
+  "61581502015227",
+  "61581502015227",
+  "61581502015227"
 ];
 
 module.exports = {
@@ -11,7 +11,7 @@ module.exports = {
     name: "accept",
     aliases: ['acp'],
     version: "3.7",
-    author: "Mahu (Fix by Asif)",
+    author: "EDEN",
     countDown: 8,
     role: 0,
     shortDescription: "Accept or list friend requests",
