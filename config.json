@@ -32,8 +32,8 @@
     "how_it_work": "if you enable both..."
   },
   "database": {
-    "type": "mongodb",
-    "uriMongodb": "mongodb+srv://asif786:asif1@asif.xsqt41r.mongodb.net/?retryWrites=true&w=majority&appName=asif",
+    "type": "sqlite",
+    "uriMongodb": "",
     "autoSyncWhenStart": false,
     "autoRefreshThreadInfoFirstTime": true,
     "notes": "(1) type selects..."
