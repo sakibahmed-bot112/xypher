@@ -1,50 +1,69 @@
-const ytSearch = require("yt-search");
+const axios = require('axios'); const yts = require("yt-search");
 
-module.exports = {
-  config: {
-    name: "sing",
-    aliases: ["audi", "music"],
-    version: "1.0",
-    author: "Eren Yeager",
-    countDown: 5,
-    role: 0,
-    shortDescription: "Play music from YouTube",
-    longDescription: "Search and stream mp3 audio from YouTube using your API",
-    category: "media"
-  },
+// Fetch Base API URL const baseApiUrl = async () => { const base = await axios.get( https://raw.githubusercontent.com/Mostakim0978/D1PT0/refs/heads/main/baseApiUrl.json ); return base.data.api; };
 
-  onStart: async function ({ args, message, api }) {
-    if (!args.length)
-      return message.reply("⚠️ Please type a song name.\nUsage: !xong <song name>");
+// Set global API (async () => { global.apis = { diptoApi: await baseApiUrl() }; })();
 
-    const query = args.join(" ");
-    try {
-      const res = await ytSearch(query);
-      const video = res.videos.length > 0 ? res.videos[0] : null;
+// Stream from URL async function getStreamFromURL(url, pathName) { try { const response = await axios.get(url, { responseType: "stream" }); response.data.path = pathName; return response.data; } catch (err) { throw err; } }
 
-      if (!video) {
-        return message.reply("😿 No results found for your query.");
-      }
+// Attach Stream Function to Global Utils global.utils = { ...global.utils, getStreamFromURL: global.utils.getStreamFromURL || getStreamFromURL };
 
-      const videoUrl = `https://youtube.com/watch?v=${video.videoId}`;
-      const apiUrl = `https://webm-to-mp3-production.up.railway.app/xong?url=${encodeURIComponent(videoUrl)}`;
+// Extract YouTube Video ID function getVideoID(url) { const checkurl = /^(?:https?://)?(?:m.|www.)?(?:youtu.be/|youtube.com/(?:embed/|v/|watch?v=|watch?.+&v=|shorts/))((\w|-){11})(?:\S+)?$/; const match = url.match(checkurl); return match ? match[1] : null; }
 
-      const loadingMsg = await message.reply(
-        `Downloading Please wait..`
-      );
+// Command Config const config = { name: "sing", author: "eden", credits: "eden", version: "1.2.0", role: 0, hasPermssion: 0, description: "", usePrefix: true, prfix: true, category: "media", commandCategory: "media", cooldowns: 5, countDown: 5, };
 
-      setTimeout(() => {
-        api.unsendMessage(loadingMsg.messageID);
-      }, 4000);
+// Start Function async function onStart({ api, args, event }) { try { let videoID; const url = args[0]; let w;
 
-      await message.reply({
-        body: `🎶 Now playing: ${video.title}`,
-        attachment: await global.utils.getStreamFromURL(apiUrl)
-      });
-
-    } catch (err) {
-      console.error(err);
-      await message.reply("❌ Failed to process. Try again later.");
-    }
+// If input is a YouTube link
+if (url && (url.includes("youtube.com") || url.includes("youtu.be"))) {
+  videoID = getVideoID(url);
+  if (!videoID) {
+    return api.sendMessage("Invalid YouTube URL.", event.threadID, event.messageID);
   }
-};
+}
+
+// If input is text (song name)
+else {
+  const songName = args.join(' ');
+
+  w = await api.sendMessage(
+    `Searching song "${songName}"...`,
+    event.threadID
+  );
+
+  const r = await yts(songName);
+  const videos = r.videos.slice(0, 50);
+  const videoData = videos[Math.floor(Math.random() * videos.length)];
+
+  videoID = videoData.videoId;
+}
+
+// Fetch download info
+const { data: { title, quality, downloadLink } } = await axios.get(
+  `${global.apis.diptoApi}/ytDl3?link=${videoID}&format=mp3`
+);
+
+// Remove searching message
+if (w?.messageID) api.unsendMessage(w.messageID);
+
+// Shorten link
+const o = '.php';
+const shortenedLink = (
+  await axios.get(`https://tinyurl.com/api-create${o}?url=${encodeURIComponent(downloadLink)}`)
+).data;
+
+// Send result message + audio
+await api.sendMessage(
+  {
+    body: `🔖 - 𝚃𝚒𝚝𝚕𝚎: ${title}\n✨ - 𝚀𝚞𝚊𝚕𝚒𝚝𝚢: ${quality}\n\n📥 - 𝙳𝚘𝚠𝚗𝚕𝚘𝚊𝚍 𝙻𝚒𝚗𝚔: ${shortenedLink}`,
+    attachment: await global.utils.getStreamFromURL(downloadLink, title + '.mp3')
+  },
+  event.threadID,
+  event.messageID
+);
+
+}
+
+catch (e) { api.sendMessage(e.message || "An error occurred.", event.threadID, event.messageID); } }
+
+module.exports = { config, onStart, run: onStart };
