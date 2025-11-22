@@ -13,7 +13,7 @@
   "language": "en",
   "notesLanguage": "change to your language...",
   "nickNameBot": "[ # ] TOP SHELBY!🗿",
-  "prefix": "#",
+  "prefix": "+",
   "adminOnly": {
     "enable": false,
     "ignoreCommand": []
